@@ -1,0 +1,3 @@
+[submodule "phaseportrait"]
+	path = phaseportrait
+	url = git@github.com:phaseportrait/phaseportrait.git
