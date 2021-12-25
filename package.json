@@ -1,0 +1,47 @@
+{
+  "name": "electron-flask",
+  "version": "1.2.0",
+  "description": "",
+  "main": "main.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "electron .",
+    "package": "node package_python.js && npm run -s package-electron && npm run -s package-cleanup",
+    "package-electron": "electron-builder",
+    "package-cleanup": "rm -rf build && rm -rf run_app.spec && rm -rf dist-python"
+  },
+  "build": {
+    "appId": "com.electron-flask.my-app",
+    "productName": "ElectronFlask",
+    "asar": false,
+    "asarUnpack": [
+      "**/*.node"
+    ],
+    "mac": {
+      "category": "public.app-category.utilities"
+    },
+    "files": [
+      "main.js",
+      "icon.png",
+      "node_modules/**/*"
+    ],
+    "extraResources": [
+      {
+        "from": "dist-python/",
+        "to": "app/dist-python",
+        "filter": [
+          "**/*"
+        ]
+      }
+    ]
+  },
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "ps-tree": "^1.2.0"
+  },
+  "devDependencies": {
+    "electron": "^13.6.0",
+    "electron-builder": "^22.11.7"
+  }
+}
