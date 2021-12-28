@@ -1,23 +1,11 @@
 "use strict";
 
 const electron = require("electron");
-const { app, BrowserWindow } = electron;
+const { app, BrowserWindow, ipcMain } = electron;
 const spawn = require("child_process").spawn;
 
 // Keep a global reference of the mainWindowdow object to avoid garbage collector
 let mainWindow = null;
-
-let runPythonScript = new Promise(function (success, nosuccess) {
-  const script = spawn('python', ['./test.py']);
-
-  script.stdout.on('data', (data) => {
-    success(data);
-  });
-  script.stderr.on('data', (data) => {
-    nosuccess(data);
-  });
-});
-
 
 const createMainWindow = () => {
   // Create the browser mainWindow
@@ -46,7 +34,11 @@ const createMainWindow = () => {
 
 app.on("ready", () => {
   createMainWindow();
-  setTimeout(plot, 2000);
+
+  ipcMain.on('request-plot', (event, plotParams) => {
+    console.log(plotParams);
+    plot(plotParams);
+  })
 });
 
 // disable menu
@@ -64,12 +56,26 @@ app.on("quit", () => {
   // do some additional cleanup
 });
 
+function runPythonScript(plotParams = []) {
+  return new Promise(function (success, nosuccess) {
+    const script = spawn('python', ['./test.py', plotParams]);
+  
+    script.stdout.on('data', (data) => {
+      success(data);
+    });
+    
+    script.stderr.on('data', (data) => {
+      nosuccess(data);
+    });
+  });
+}
+
 function updatePlotSVG(filename) {
   mainWindow.webContents.send('load-svg', filename)
 }
 
-function plot() {
-  runPythonScript
+function plot(params) {
+  runPythonScript(params)
     .then((data) => {
       console.log(data.toString());
       if (data !== null) updatePlotSVG(data.toString());
