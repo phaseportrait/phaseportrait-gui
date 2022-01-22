@@ -56,17 +56,16 @@ app.on("quit", () => {
   // do some additional cleanup
 });
 
-function runPythonScript(plotParams = []) {
+
+function runPythonScript(plot = true, plotParams = []) {
   return new Promise(function (success, nosuccess) {
-    const script = spawn('python', ['./test.py', plotParams]);
-  
-    script.stdout.on('data', (data) => {
-      success(data);
-    });
-    
-    script.stderr.on('data', (data) => {
-      nosuccess(data);
-    });
+    const script = spawn('python', [
+      './pp-launcher.py',
+      plot ? '--plot' : '--code',
+      JSON.stringify(plotParams)
+    ]);
+    script.stdout.on('data', success);
+    script.stderr.on('data', nosuccess);
   });
 }
 
@@ -75,10 +74,21 @@ function updatePlotSVG(filename) {
 }
 
 function plot(params) {
-  runPythonScript(params)
+  runPythonScript(true, params)
     .then((data) => {
+      if (!data) return;
       console.log(data.toString());
-      if (data !== null) updatePlotSVG(data.toString());
+      updatePlotSVG(data.toString());
+    })
+    .catch((error) => {
+      console.log('error', error);
+    });
+}
+
+function generateCode(params) {
+  runPythonScript(false, params)
+    .then((data) => {
+      // TODO
     })
     .catch((error) => {
       console.log('error', error);
