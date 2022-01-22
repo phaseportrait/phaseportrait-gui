@@ -1,18 +1,20 @@
-"use strict";
+'use strict';
 
-const electron = require("electron");
+const electron = require('electron');
 const { app, BrowserWindow, ipcMain } = electron;
-const spawn = require("child_process").spawn;
+const spawn = require('child_process').spawn;
+const fs = require('fs');
+const path = require('path');
 
 // Keep a global reference of the mainWindowdow object to avoid garbage collector
 let mainWindow = null;
 
-const createMainWindow = () => {
+function createMainWindow() {
   // Create the browser mainWindow
   mainWindow = new BrowserWindow({
     width: 1200,
     height: 800,
-    icon: __dirname + "/icon.png",
+    icon: __dirname + '/icon.png',
     resizeable: true,
     webPreferences: {
       nodeIntegration: true,
@@ -27,12 +29,25 @@ const createMainWindow = () => {
   mainWindow.webContents.openDevTools();
 
   // Dereference the mainWindow object when the mainWindow is closed.
-  mainWindow.on("closed", () => {
+  mainWindow.on('closed', () => {
     mainWindow = null;
   });
 };
 
-app.on("ready", () => {
+function emptySVGDir() {
+  fs.readdir('svg', (err, files) => {
+    if (err) throw err;
+
+    for (const file of files) {
+      fs.unlink(path.join('svg', file), err => {
+        if (err) throw err;
+      });
+    }
+  });
+}
+
+app.on('ready', () => {
+  emptySVGDir();
   createMainWindow();
 
   ipcMain.on('request-plot', (event, plotParams) => {
@@ -42,17 +57,17 @@ app.on("ready", () => {
 });
 
 // disable menu
-app.on("browser-window-created", (e, window) => {
+app.on('browser-window-created', (e, window) => {
   window.setMenu(null);
 });
 
-app.on("activate", () => {
+app.on('activate', () => {
   if (mainWindow === null) {
     createMainWindow();
   }
 });
 
-app.on("quit", () => {
+app.on('quit', () => {
   // do some additional cleanup
 });
 
