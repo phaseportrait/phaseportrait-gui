@@ -28,6 +28,12 @@ function createMainWindow() {
   // Open the DevTools
   mainWindow.webContents.openDevTools();
 
+  // Link handler
+  mainWindow.webContents.setWindowOpenHandler(({ url }) => {
+    electron.shell.openExternal(url);
+    return { action: 'deny' };
+  });
+
   // Dereference the mainWindow object when the mainWindow is closed.
   mainWindow.on('closed', () => {
     mainWindow = null;
