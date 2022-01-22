@@ -6,6 +6,8 @@
   <title>phaseportrait</title>
   <link rel="stylesheet" href="css/tailwind.css">
   <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="node_modules/codemirror/lib/codemirror.css">
+  <link rel="stylesheet" href="node_modules/codemirror/theme/material.css">
   <script src="renderer.js"></script>
 </head>
 
@@ -43,7 +45,8 @@
         <div class="field w-full mb-3">
           <label for="editor"
             class="block uppercase tracking-wide text-gray-700 dark:text-gray-50 text-xs font-bold mb-2">Function</label>
-          <ngx-codemirror name="function" [(ngModel)]="content" [options]="options"></ngx-codemirror>
+          <textarea name="function" id="codemirror-container">def hola(a, b):
+  return b, -a</textarea>
         </div>
 
         <div class="field w-full">

@@ -1,4 +1,14 @@
-var electron = require("electron");
+require('codemirror/mode/python/python');
+require('codemirror/addon/scroll/simplescrollbars');
+const electron = require("electron");
+const cm = require('codemirror');
+
+window.onload = () => {
+    var editor = cm.fromTextArea(document.getElementById('codemirror-container'), {
+        mode: 'python',
+        theme: 'material',
+    });
+}
 
 electron.ipcRenderer.on("load-svg", (event, filename) => {
     document.getElementById("img").src = `${__dirname}/svg/${filename}`;

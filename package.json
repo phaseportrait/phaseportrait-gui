@@ -18,6 +18,7 @@
   },
   "homepage": "https://github.com/phaseportrait/phaseportrait-gui#readme",
   "dependencies": {
+    "codemirror": "^5.65.1",
     "electron": "^16.0.5"
   },
   "devDependencies": {
