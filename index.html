@@ -1,13 +1,209 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <meta charset="UTF-8">
-    <title>phaseportrait</title>
-    <link rel="stylesheet" href="./styles.css">
-    <script src="./renderer.js"></script>
-  </head>
-  <body>
-    <button type="button" onclick="plot()">Plot</button>
-    <img id="img" alt="result">
-  </body>
+
+<head>
+  <meta charset="UTF-8">
+  <title>phaseportrait</title>
+  <link rel="stylesheet" href="css/tailwind.css">
+  <link rel="stylesheet" href="css/style.css">
+  <script src="renderer.js"></script>
+</head>
+
+<body>
+  <div class="
+    columns-2xs
+    p-6
+    flex flex-wrap
+    mx-auto
+    max-w-7xl
+    sm:flex-nowrap sm:max-h-screen
+    gap-6
+">
+
+    <!-- Form area -->
+    <div class="
+        container
+        flex flex-col
+        p-6
+        w-full
+        sm:max-w-[50%] lg:max-w-[40%]
+        max-h-full
+        bg-gray-100 dark:bg-gray-800
+        shadow-lg
+        rounded-md
+    ">
+      <h1 class="
+            text-3xl font-bold leading-7
+            text-gray-900 dark:text-white
+            mb-6
+        ">Parameters</h1>
+
+      <form class="w-full h-full overflow-auto pr-3 flex flex-col gap-2 rounded-md">
+
+        <div class="field w-full mb-3">
+          <label for="editor"
+            class="block uppercase tracking-wide text-gray-700 dark:text-gray-50 text-xs font-bold mb-2">Function</label>
+          <ngx-codemirror name="function" [(ngModel)]="content" [options]="options"></ngx-codemirror>
+        </div>
+
+        <div class="field w-full">
+          <label for="input1" class="
+                    block
+                    uppercase
+                    tracking-wide
+                    text-gray-700 dark:text-gray-50 text-xs font-bold
+                    mb-2
+                ">Number Input</label>
+          <input id="input1" type="number" placeholder="" class="
+                    appearance-none
+                    block
+                    w-full
+                    bg-gray-200 dark:bg-[#263238]
+                    text-gray-700
+                    border border-gray-200 dark:border-gray-500
+                    rounded
+                    py-3 px-4 mb-3
+                    dark:text-gray-100
+                    leading-tight
+                    focus:outline-none focus:bg-white focus:border-gray-500
+                ">
+        </div>
+
+        <div class="field w-full">
+          <label for="input1" class="
+                    block
+                    uppercase
+                    tracking-wide
+                    text-gray-700 dark:text-gray-50 text-xs font-bold
+                    mb-2
+                ">Slider Input</label>
+          <input type="range" class="
+                    appearance-none
+                    w-full h-0.5
+                    bg-gray-300 dark:bg-gray
+                    rounded
+                    outline-none
+                    slider-thumb
+                    mb-4
+                " />
+        </div>
+
+      </form>
+
+      <button onclick="plot()" class="
+            py-2
+            mt-4
+            w-full
+            bg-blue-500 hover:bg-blue-600
+            rounded-md
+            text-white font-bold uppercase
+            active:bg-blue-800 active:shadow-lg transition duration-150 ease-in-out
+            disabled:bg-gray-400 dark:disabled:bg-gray-600
+        ">
+        <svg class="h-6 w-6 text-white inline-block mr-1" width="24" height="24" viewBox="0 0 24 24" stroke-width="2"
+          stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+
+          <path stroke="none" d="M0 0h24v24H0z" />
+          <path d="M3 21v-4a4 4 0 1 1 4 4h-4" />
+          <path d="M21 3a16 16 0 0 0 -12.8 10.2" />
+          <path d="M21 3a16 16 0 0 1 -10.2 12.8" />
+          <path d="M10.6 9a9 9 0 0 1 4.4 4.4" />
+
+        </svg>
+        Plot</button>
+    </div>
+
+    <!-- Image and credits area -->
+    <div class="
+        container
+        flex flex-col gap-6
+        pb-6 sm:pb-0
+    ">
+      <div class="
+            p-6
+            bg-gray-100 dark:bg-gray-800
+            shadow-lg
+            rounded-md
+        ">
+
+        <!-- Image and full-screen floating button -->
+        <div class="relative">
+
+          <img id="img" alt="Plot result" class="
+                    max-h-full
+                    flex-1
+                ">
+          <div class="hidden h-72 flex">
+            <p class="
+                        text-gray-500 dark:text-gray-300
+                        text-center
+                        m-auto
+                        w-full
+                    ">No plot yet</p>
+          </div>
+
+
+          <button class="
+                        flex justify-center items-center
+                        p-0
+                        w-10 h-10
+                        bg-blue-100 hover:bg-blue-500
+                        rounded-full
+                        active:shadow-lg
+                        mouse
+                        shadow
+                        transition ease-in
+                        focus:outline-none
+                        text-black
+                        hover:text-white
+                        absolute
+                        bottom-0
+                        right-0
+                ">
+            <svg class="h-6 w-6 inline-block" width="24" height="24" viewBox="0 0 24 24" stroke-width="2"
+              stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+              <path stroke="none" d="M0 0h24v24H0z" />
+              <path d="M4 8v-2a2 2 0 0 1 2 -2h2" />
+              <path d="M4 16v2a2 2 0 0 0 2 2h2" />
+              <path d="M16 4h2a2 2 0 0 1 2 2v2" />
+              <path d="M16 20h2a2 2 0 0 0 2 -2v-2" />
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <div class="container mt-auto font-mono text-right">
+        <div class="block text-gray-500 dark:text-gray-300 text-sm">
+          CORE by
+          <a class="hover:underline" href="https://github.com/QuanticPony">Unai Lería Fortea</a>
+          and
+          <a class="hover:underline" href="https://github.com/Loracio">Víctor Loras Herrero</a>
+        </div>
+        <div class="block text-gray-500 dark:text-gray-300 text-sm">
+          GUI by
+          <a class="hover:underline" href="https://github.com/aileria">Aitor Lería Fortea</a>
+        </div>
+
+        <a href="https://github.com/phaseportrait" class="
+                flex gap-2 font-mono
+                text-blue-600 dark:text-blue-300
+                hover:underline cursor-pointer
+                justify-end
+                mt-2
+            ">
+          <svg class="h-5 w-5" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"
+            fill="none" stroke-linecap="round" stroke-linejoin="round">
+            <path stroke="none" d="M0 0h24v24H0z" />
+            <path
+              d="M9 19c-4.286 1.35-4.286-2.55-6-3m12 5v-3.5c0-1 .099-1.405-.5-2 2.791-.3 5.5-1.366 5.5-6.04a4.567 4.567 0 0 0 -1.333 -3.21 4.192 4.192 0 00-.08-3.227s-1.05-.3-3.476 1.267a12.334 12.334 0 0 0 -6.222 0C6.462 2.723 5.413 3.023 5.413 3.023a4.192 4.192 0 0 0 -.08 3.227A4.566 4.566 0 004 9.486c0 4.64 2.709 5.68 5.5 6.014-.591.589-.56 1.183-.5 2V21" />
+          </svg>
+          phaseportrait
+        </a>
+      </div>
+
+    </div>
+
+  </div>
+</body>
+
 </html>

@@ -19,5 +19,8 @@
   "homepage": "https://github.com/phaseportrait/phaseportrait-gui#readme",
   "dependencies": {
     "electron": "^16.0.5"
+  },
+  "devDependencies": {
+    "tailwindcss": "^3.0.15"
   }
 }
