@@ -43,8 +43,8 @@ function createMainWindow() {
 function emptySVGDir() {
   fs.readdir('svg', (err, files) => {
     if (err) throw err;
-
     for (const file of files) {
+      if (file === 'default.svg') return;
       fs.unlink(path.join('svg', file), err => {
         if (err) throw err;
       });

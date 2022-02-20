@@ -1,12 +1,17 @@
 require('codemirror/mode/python/python');
 require('codemirror/addon/scroll/simplescrollbars');
+require('codemirror/addon/display/placeholder');
 const electron = require("electron");
 const cm = require('codemirror');
+
+const defaultFunction = 'def a(x, y, *, w=0):\n\treturn x, -y';
 
 window.onload = () => {
     var editor = cm.fromTextArea(document.getElementById('codemirror-container'), {
         mode: 'python',
         theme: 'material',
+        lineNumbers: true,
+        placeholder: defaultFunction,
     });
 }
 
