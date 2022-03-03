@@ -50,6 +50,18 @@
 
         <!-- Arguments -->
 
+        <div id="dF_args_div" class="container flex flex-col items-center gap-2" style="display: none;">
+          <div class="w-full flex items-center gap-2 mb-1">
+            <span>Parameters</span>
+            <span class="w-full h-[1px] bg-gray-200"></span>
+          </div>
+
+          <!-- Args container -->
+          <div id="dF_args_containter" class="container flex flex-col items-center gap-2">
+          </div>
+
+        </div>
+
         <!-- Range -->
         <div class="container flex flex-col items-center gap-2">
           <div class="w-full flex items-center gap-2 mb-1">
@@ -119,7 +131,7 @@
               uppercase
               tracking-wide
               text-gray-700 dark:text-gray-50 text-xs font-bold
-              mb-1">
+              mb-3">
                 y
               </div>
               <div>
@@ -155,11 +167,6 @@
 
             </div>
           </div>
-          <!-- y Range -->
-          <div class="field w-full">
-
-          </div>
-
         </div>
 
         <!-- Graph options -->
@@ -315,6 +322,10 @@
 
         <!-- Nullcline -->
         <div class="container">
+          <div class="w-full flex items-center gap-2 mb-2">
+            <span>Nullclines</span>
+            <span class="w-full h-[1px] bg-gray-200"></span>
+          </div>
           <!-- Offset -->
           <div class="field w-full" style="float: left; width: 48%;">
             <label for="offset" class="
@@ -454,9 +465,9 @@
       <div class="container mt-auto font-mono text-right">
         <div class="block text-gray-500 dark:text-gray-300 text-sm">
           CORE by
-          <a class="hover:underline" target="_blank" href="https://github.com/QuanticPony">Unai Lería Fortea</a>
-          and
           <a class="hover:underline" target="_blank" href="https://github.com/Loracio">Víctor Loras Herrero</a>
+          and
+          <a class="hover:underline" target="_blank" href="https://github.com/QuanticPony">Unai Lería Fortea</a>
         </div>
         <div class="block text-gray-500 dark:text-gray-300 text-sm">
           GUI by
