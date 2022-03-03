@@ -20,7 +20,7 @@ function createMainWindow() {
 	mainWindow = new BrowserWindow({
 		width: 1200,
 		height: 800,
-		icon: __dirname + '/icon.png',
+		icon: __dirname + '/phaseportrait_icon.png',
 		resizeable: true,
 		webPreferences: {
 			nodeIntegration: true,
@@ -51,7 +51,8 @@ function emptySVGDir() {
 		if (err) throw err;
 		for (const file of files) {
 			if (file === 'default.svg') continue;
-			fs.unlink(path.join('svg', file), err => {
+			// fs.unlinkSync(path.join('svg', file), err => {
+			fs.unlinkSync(`${__dirname}\\svg\\${file}`, err => {
 				if (err) throw err;
 			});
 		}
