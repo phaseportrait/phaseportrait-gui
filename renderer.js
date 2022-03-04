@@ -20,9 +20,42 @@ window.onload = () => {
 }
 
 electron.ipcRenderer.on("load-svg", (event, filename) => {
-    console.log(`${filename}`)
+    // console.log(`${filename}`);
     document.getElementById("img").src = `${filename}`;
 });
+
+// TODO: ponerlo a pantalla completa y quizá opción de copiarlo al portapapeles
+electron.ipcRenderer.on("show-code", (event, code) => {
+    console.log(`${code}`);
+});
+
+
+function add_dFarg(param_name, placeholder) {
+    if (dF_args_length == 0) {
+        document.getElementById('dF_args_div').style.display = null;
+    }
+    let param_div = document.createElement('div');
+    param_div.id = `${param_name}_div`
+    param_div.className = "container w-full flex gap-2 items-center";
+
+    let param_div_name = document.createElement('div');
+    param_div_name.className = "block uppercase tracking-wide text-gray-700 dark:text-gray-50 text-xs font-bold mb-1";
+    param_div_name.innerHTML = param_name;
+    param_div.append(param_div_name);
+
+    let param_input = document.createElement('input');
+    param_input.id = `${param_name}_value`;
+    param_input.type = "number";
+    param_input.value = String(placeholder);
+    param_input.className = "appearance-none block w-full bg-gray-200 dark:bg-[#263238] text-gray-700 border border-gray-200 dark:border-gray-500 rounded py-3 px-4 mb-3 dark:text-gray-100 leading-tight focus:outline-none focus:bg-white focus:border-gray-500";
+    param_div.append(param_input);
+
+    document.getElementById('dF_args_containter').append(param_div)
+}
+
+function remove_dFarg(param_name) {
+    document.getElementById(`${param_name}_div`)?.remove();
+}
 
 function update_dF_args() {
     dF_args_new = {};
@@ -62,34 +95,7 @@ function update_dF_args() {
     }
 }
 
-function add_dFarg(param_name, placeholder) {
-    if (dF_args_length == 0) {
-        document.getElementById('dF_args_div').style.display = null;
-    }
-    let param_div = document.createElement('div');
-    param_div.id = `${param_name}_div`
-    param_div.className = "container w-full flex gap-2 items-center";
-
-    let param_div_name = document.createElement('div');
-    param_div_name.className = "block uppercase tracking-wide text-gray-700 dark:text-gray-50 text-xs font-bold mb-1";
-    param_div_name.innerHTML = param_name;
-    param_div.append(param_div_name);
-
-    let param_input = document.createElement('input');
-    param_input.id = `${param_name}_value`;
-    param_input.type = "number";
-    param_input.value = String(placeholder);
-    param_input.className = "appearance-none block w-full bg-gray-200 dark:bg-[#263238] text-gray-700 border border-gray-200 dark:border-gray-500 rounded py-3 px-4 mb-3 dark:text-gray-100 leading-tight focus:outline-none focus:bg-white focus:border-gray-500";
-    param_div.append(param_input);
-
-    document.getElementById('dF_args_containter').append(param_div)
-}
-
-function remove_dFarg(param_name) {
-    document.getElementById(`${param_name}_div`)?.remove();
-}
-
-function plot() {
+function update_params() {
     params = {};
 
     // dF
@@ -119,8 +125,8 @@ function plot() {
     Density = Number(document.getElementById('Density').value);
     if (Density) params['Density'] = Density;
 
-    // Polar = Boolean(document.getElementById('Polar').value)
-    // if (Polar) params['Polar'] = Polar
+    Polar = Boolean(document.getElementById('Polar').checked)
+    if (Polar) params['Polar'] = Polar
 
     Title = document.getElementById('Title').value;
     if (Title) params['Title'] = Title;
@@ -148,7 +154,16 @@ function plot() {
 
     params['path'] = `${__dirname}\\svg\\`
 
-    console.log(params);
+    // console.log(params);
+    return params
+}
 
+function plot() {
+    params = update_params();
     electron.ipcRenderer.send("request-plot", params);
+}
+
+function get_python_code() {
+    params = update_params();
+    electron.ipcRenderer.send("request-code", params);
 }

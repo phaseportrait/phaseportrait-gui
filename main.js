@@ -67,6 +67,9 @@ app.on('ready', () => {
 		// myConsole.log(plotParams);
 		plot(plotParams);
 	})
+	ipcMain.on('request-code', (event, plotParams) => {
+		generateCode(plotParams);
+	})
 });
 
 // disable menu
@@ -103,7 +106,6 @@ function runPythonScript(plot = true, plotParams = []) {
 			args: [plot ? '--plot' : '--code',
 				JSON.stringify(plotParams)]
 		}
-		console.log('duck')
 		PythonShell.run(`${__dirname}\\phaseportrait-launcher.py`, options, function (err, results) {
 			if (err) nosuccess(err);
 			success(results)
@@ -114,6 +116,10 @@ function runPythonScript(plot = true, plotParams = []) {
 
 function updatePlotSVG(filename) {
 	mainWindow.webContents.send('load-svg', filename)
+}
+
+function showPythonCode(filename) {
+	mainWindow.webContents.send('show-code', filename)
 }
 
 function plot(params) {
@@ -131,9 +137,9 @@ function plot(params) {
 function generateCode(params) {
 	runPythonScript(false, params)
 		.then((data) => {
-			// TODO
+			showPythonCode(data.toString())
 		})
 		.catch((error) => {
-			console.log('error', error);
+			myConsole.log('error', error);
 		});
 }

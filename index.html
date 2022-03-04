@@ -46,6 +46,21 @@
           <label for="editor"
             class="block uppercase tracking-wide text-gray-700 dark:text-gray-50 text-xs font-bold mb-2">Function</label>
           <textarea name="function" id="codemirror-container"></textarea>
+
+          <!-- Polar -->
+          <div class="w-full flex items-center gap-2 mb-1">
+            <!-- TODO: poner a la derecha? creo que quedaría mejor -->
+            <label><input type="checkbox" id="Polar" class="
+              bg-gray-200 dark:bg-[#263238]
+              text-gray-700
+              border border-gray-200 dark:border-gray-500
+              rounded
+              py-3 px-4 mb-3
+              dark:text-gray-100
+              leading-tight
+              focus:outline-none focus:bg-white focus:border-gray-500
+          ">Polar</label>
+          </div>
         </div>
 
         <!-- Arguments -->
@@ -377,7 +392,9 @@
 
       </form>
 
-      <button onclick="plot()" class="
+      <!-- TODO: quizá poner uno al lado del otro? colores diferentes y dibujito diferente -->
+      <div>
+        <button onclick="get_python_code()" class="
             py-2
             mt-4
             w-full
@@ -387,18 +404,45 @@
             active:bg-blue-800 active:shadow-lg transition duration-150 ease-in-out
             disabled:bg-gray-400 dark:disabled:bg-gray-600
         ">
-        <svg class="h-6 w-6 text-white inline-block mr-1" width="24" height="24" viewBox="0 0 24 24" stroke-width="2"
-          stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+          <svg class="h-6 w-6 text-white inline-block mr-1" width="24" height="24" viewBox="0 0 24 24" stroke-width="2"
+            stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
 
-          <path stroke="none" d="M0 0h24v24H0z" />
-          <path d="M3 21v-4a4 4 0 1 1 4 4h-4" />
-          <path d="M21 3a16 16 0 0 0 -12.8 10.2" />
-          <path d="M21 3a16 16 0 0 1 -10.2 12.8" />
-          <path d="M10.6 9a9 9 0 0 1 4.4 4.4" />
+            <path stroke="none" d="M0 0h24v24H0z" />
+            <path d="M3 21v-4a4 4 0 1 1 4 4h-4" />
+            <path d="M21 3a16 16 0 0 0 -12.8 10.2" />
+            <path d="M21 3a16 16 0 0 1 -10.2 12.8" />
+            <path d="M10.6 9a9 9 0 0 1 4.4 4.4" />
 
-        </svg>
-        Plot
-      </button>
+          </svg>
+          Code
+        </button>
+
+        <button onclick="plot()" class="
+            py-2
+            mt-4
+            w-full
+            bg-blue-500 hover:bg-blue-600
+            rounded-md
+            text-white font-bold uppercase
+            active:bg-blue-800 active:shadow-lg transition duration-150 ease-in-out
+            disabled:bg-gray-400 dark:disabled:bg-gray-600
+        ">
+          <svg class="h-6 w-6 text-white inline-block mr-1" width="24" height="24" viewBox="0 0 24 24" stroke-width="2"
+            stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+
+            <path stroke="none" d="M0 0h24v24H0z" />
+            <path d="M3 21v-4a4 4 0 1 1 4 4h-4" />
+            <path d="M21 3a16 16 0 0 0 -12.8 10.2" />
+            <path d="M21 3a16 16 0 0 1 -10.2 12.8" />
+            <path d="M10.6 9a9 9 0 0 1 4.4 4.4" />
+
+          </svg>
+          Plot
+        </button>
+
+
+      </div>
+
     </div>
 
 
