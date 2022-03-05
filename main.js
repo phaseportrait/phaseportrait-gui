@@ -11,6 +11,7 @@ let {PythonShell} = require('python-shell')
 
 // TODO: quitar?
 const myConsole = new console.Console(fs.createWriteStream('./phase-log-trait.txt'));
+const python_options = fs.createReadStream('./settings.json')
 
 // Keep a global reference of the mainWindowdow object to avoid garbage collector
 let mainWindow = null;
@@ -104,6 +105,7 @@ app.on('quit', () => {
 function runPythonScript(plot = true, plotParams = []) {
 	return new Promise(function (success, nosuccess) {
 		let options = {
+			pythonPath: python_options['pythonPath'],
 			args: [plot ? '--plot' : '--code',
 				JSON.stringify(plotParams)]
 		}
