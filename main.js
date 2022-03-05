@@ -9,7 +9,7 @@ const path = require('path');
 let {PythonShell} = require('python-shell')
 
 
-// TODO: quitar
+// TODO: quitar?
 const myConsole = new console.Console(fs.createWriteStream('./phase-log-trait.txt'));
 
 // Keep a global reference of the mainWindowdow object to avoid garbage collector
@@ -32,7 +32,8 @@ function createMainWindow() {
 	mainWindow.loadFile('index.html');
 
 	// Open the DevTools
-	mainWindow.webContents.openDevTools();
+	// TODO: quitar esto
+	// mainWindow.webContents.openDevTools();
 
 	// Link handler
 	mainWindow.webContents.setWindowOpenHandler(({ url }) => {
@@ -137,7 +138,7 @@ function plot(params) {
 function generateCode(params) {
 	runPythonScript(false, params)
 		.then((data) => {
-			showPythonCode(data.toString())
+			showPythonCode( data.join('\n'))
 		})
 		.catch((error) => {
 			myConsole.log('error', error);

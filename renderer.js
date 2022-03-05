@@ -5,10 +5,13 @@ const electron = require("electron");
 const cm = require('codemirror');
 
 let editor;
+let code_display;
 const defaultFunction = 'def a(x, y, *, w=0):\n\treturn y, -x';
 
 var dF_args_length = 0;
 var dF_args = {};
+var parameters_visible = true
+var plot_visible = true
 
 window.onload = () => {
     editor = cm.fromTextArea(document.getElementById('codemirror-container'), {
@@ -17,16 +20,30 @@ window.onload = () => {
         lineNumbers: true,
         placeholder: defaultFunction,
     });
+    code_display= cm.fromTextArea(document.getElementById('codemirror-container-code-display'), {
+        mode: 'python',
+        theme: 'material',
+        lineNumbers: true,
+    });
 }
 
 electron.ipcRenderer.on("load-svg", (event, filename) => {
     // console.log(`${filename}`);
+    if (!plot_visible){
+        document.getElementById("img").style.display = null;
+        document.getElementById("code_div").style.display = 'none';
+        plot_visible = !plot_visible;
+    }
     document.getElementById("img").src = `${filename}`;
 });
 
-// TODO: ponerlo a pantalla completa y quizá opción de copiarlo al portapapeles
 electron.ipcRenderer.on("show-code", (event, code) => {
-    console.log(`${code}`);
+    if (plot_visible) {
+        document.getElementById("img").style.display = 'none';
+        document.getElementById("code_div").style.display = null;
+        plot_visible = !plot_visible;
+    }
+    code_display.setValue(code);
 });
 
 
@@ -72,27 +89,28 @@ function update_dF_args() {
                 dF_args_new[parameter] = 0
             }
         });
-        Object.keys(dF_args_new).forEach(function(key) {
-            if (key in dF_args) {
-                dF_args_new[key] = Number(document.getElementById(`${key}_value`).value)
-            }
-            else{
-                add_dFarg(key, dF_args[key]);
-                dF_args_length += 1;
-            };
-        });
-        Object.keys(dF_args).forEach(function(key) {
-            if (!(key in dF_args_new)) {
-                remove_dFarg(key);
-                dF_args_length -= 1;
-            };
-        });
-        if (dF_args_length == 0) {
-            document.getElementById('dF_args_div').style.display = 'none'
-        };
-        
-        dF_args = dF_args_new;
     }
+    Object.keys(dF_args_new).forEach(function(key) {
+        if (key in dF_args) {
+            dF_args_new[key] = Number(document.getElementById(`${key}_value`).value)
+        }
+        else{
+            add_dFarg(key, dF_args[key]);
+            dF_args_length += 1;
+        };
+    });
+    Object.keys(dF_args).forEach(function(key) {
+        if (!(key in dF_args_new)) {
+            remove_dFarg(key);
+            dF_args_length -= 1;
+        };
+    });
+    if (dF_args_length == 0) {
+        document.getElementById('dF_args_div').style.display = 'none'
+    };
+    
+    dF_args = dF_args_new;
+
 }
 
 function update_params() {
@@ -159,6 +177,7 @@ function update_params() {
 }
 
 function plot() {
+    exit_code_display()
     params = update_params();
     electron.ipcRenderer.send("request-plot", params);
 }
@@ -167,3 +186,22 @@ function get_python_code() {
     params = update_params();
     electron.ipcRenderer.send("request-code", params);
 }
+
+function zoom_image() {
+    parameters_visible = !parameters_visible;
+    parameters_div = document.getElementById("parameters_div");
+    if (parameters_visible) {
+        parameters_div.style.display = null;
+    }
+    else {
+        parameters_div.style.display = 'none';
+    }
+};
+
+function exit_code_display() {
+    if (!plot_visible){
+        document.getElementById("img").style.display = null;
+        document.getElementById("code_div").style.display = 'none';
+        plot_visible = !plot_visible;
+    }
+};

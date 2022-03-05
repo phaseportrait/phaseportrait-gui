@@ -12,7 +12,7 @@
 </head>
 
 <body>
-  <div class="
+  <div id="parameters_plot_container" class="
     columns-2xs
     p-6
     flex flex-wrap
@@ -20,10 +20,10 @@
     max-w-7xl
     sm:flex-nowrap sm:max-h-screen
     gap-6
-">
+" style="display: null;">
 
     <!-- Form area -->
-    <div class="
+    <div id="parameters_div" class="
         container
         flex flex-col
         p-6
@@ -466,18 +466,44 @@
           <img id="img" src="svg/default.svg" class="
                     max-h-full
                     flex-1
-                ">
-          <div class="hidden h-72 flex">
+                " style="display: null;">
+          <!-- <div class="hidden h-72 flex">
             <p class="
                         text-gray-500 dark:text-gray-300
                         text-center
                         m-auto
                         w-full
                     ">No plot yet</p>
+          </div> -->
+
+          <!-- Code display -->
+          <div id="code_div" class="
+        container
+        flex-1
+        p-6
+        w-full
+        max-h-full
+        max-h-full
+        bg-gray-100 dark:bg-gray-800
+        shadow-lg
+        rounded-md
+    " style="display: none;">
+            <h1 class="
+            text-3xl font-bold leading-7
+            text-gray-900 dark:text-white
+            mb-6
+        ">Python code</h1>
+
+            <div class="w-full h-full overflow-auto pr-3 flex gap-2 rounded-md">
+              <!-- Editor -->
+              <div class="field w-full mb-3">
+                <textarea name="code" id="codemirror-container-code-display"></textarea>
+              </div>
+            </div>
           </div>
 
 
-          <button class="
+          <button onclick="zoom_image()" class="
                         flex justify-center items-center
                         p-0
                         w-10 h-10
@@ -516,6 +542,8 @@
         <div class="block text-gray-500 dark:text-gray-300 text-sm">
           GUI by
           <a class="hover:underline" target="_blank" href="https://github.com/aileria">Aitor Lería Fortea</a>
+          and
+          <a class="hover:underline" target="_blank" href="https://github.com/QuanticPony">Unai Lería Fortea</a>
         </div>
 
         <a target="_blank" href="https://github.com/phaseportrait" class="
