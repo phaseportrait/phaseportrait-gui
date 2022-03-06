@@ -34,7 +34,7 @@ electron.ipcRenderer.on("load-svg", (event, filename) => {
         document.getElementById("code_div").style.display = 'none';
         plot_visible = !plot_visible;
     }
-    document.getElementById("img").src = `${filename}`;
+    document.getElementById("img").src = `${__dirname}\\svg\\${filename}`;
 });
 
 electron.ipcRenderer.on("show-code", (event, code) => {

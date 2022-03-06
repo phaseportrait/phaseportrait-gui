@@ -2,16 +2,15 @@
 
 const electron = require('electron');
 const { app, BrowserWindow, ipcMain } = electron;
-const spawn = require('child_process').spawn;
+// const spawn = require('child_process').spawn;
 const fs = require('fs');
-const path = require('path');
 
 let {PythonShell} = require('python-shell')
 
 
 // TODO: quitar?
-const myConsole = new console.Console(fs.createWriteStream('./phase-log-trait.txt'));
-const python_options = fs.createReadStream('./settings.json')
+const myConsole = new console.Console(fs.createWriteStream(`${__dirname}\\log.txt`));
+const python_options = fs.createReadStream(`${__dirname}\\python_settings.json`)
 
 // Keep a global reference of the mainWindowdow object to avoid garbage collector
 let mainWindow = null;
@@ -105,7 +104,6 @@ app.on('quit', () => {
 function runPythonScript(plot = true, plotParams = []) {
 	return new Promise(function (success, nosuccess) {
 		let options = {
-			pythonPath: python_options['pythonPath'],
 			args: [plot ? '--plot' : '--code',
 				JSON.stringify(plotParams)]
 		}
@@ -129,8 +127,8 @@ function plot(params) {
 	runPythonScript(true, params)
 		.then((data) => {
 			if (data==0) return;
-			// myConsole.log(data.toString());
-			updatePlotSVG(data.toString());
+			// myConsole.log(data);
+			updatePlotSVG(data);
 		})
 		.catch((error) => {
 			myConsole.log('error', error);
@@ -140,7 +138,7 @@ function plot(params) {
 function generateCode(params) {
 	runPythonScript(false, params)
 		.then((data) => {
-			showPythonCode( data.join('\n'))
+			showPythonCode(data.join('\n'))
 		})
 		.catch((error) => {
 			myConsole.log('error', error);
