@@ -34,7 +34,7 @@ electron.ipcRenderer.on("load-svg", (event, filename) => {
         document.getElementById("code_div").style.display = 'none';
         plot_visible = !plot_visible;
     }
-    document.getElementById("img").src = `${__dirname}\\svg\\${filename}`;
+    document.getElementById("img").src = `${__dirname}/svg/${filename}`;
 });
 
 electron.ipcRenderer.on("show-code", (event, code) => {
@@ -170,7 +170,7 @@ function update_params() {
         };
     }
 
-    params['path'] = `${__dirname}\\svg\\`
+    params['path'] = `${__dirname}/svg/`
 
     // console.log(params);
     return params

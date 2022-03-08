@@ -9,8 +9,8 @@ let {PythonShell} = require('python-shell')
 
 
 // TODO: quitar?
-const myConsole = new console.Console(fs.createWriteStream(`${__dirname}\\log.txt`));
-const python_options = fs.createReadStream(`${__dirname}\\python_settings.json`)
+const myConsole = new console.Console(fs.createWriteStream(`${__dirname}/log.txt`));
+const python_options = fs.createReadStream(`${__dirname}/python_settings.json`)
 
 // Keep a global reference of the mainWindowdow object to avoid garbage collector
 let mainWindow = null;
@@ -48,12 +48,12 @@ function createMainWindow() {
 };
 
 function emptySVGDir() {
-	fs.readdir(`${__dirname}\\svg`, (err, files) => {
+	fs.readdir(`${__dirname}/svg`, (err, files) => {
 		if (err) throw err;
 		for (const file of files) {
 			if (file === 'default.svg') continue;
 			// fs.unlinkSync(path.join('svg', file), err => {
-			fs.unlinkSync(`${__dirname}\\svg\\${file}`, err => {
+			fs.unlinkSync(`${__dirname}/svg/${file}`, err => {
 				if (err) throw err;
 			});
 		}
@@ -107,7 +107,7 @@ function runPythonScript(plot = true, plotParams = []) {
 			args: [plot ? '--plot' : '--code',
 				JSON.stringify(plotParams)]
 		}
-		PythonShell.run(`${__dirname}\\phaseportrait-launcher.py`, options, function (err, results) {
+		PythonShell.run(`${__dirname}/phaseportrait-launcher.py`, options, function (err, results) {
 			if (err) nosuccess(err);
 			success(results)
 		});
