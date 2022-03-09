@@ -7,7 +7,7 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "electron .",
     "pack:win64": "electron-packager . PhasePortrait --out=dist --arch=x64 --app-version=1.0.3 --icon=phaseportrait_icon.ico --overwrite",
-    "pack:all": "electron-packager . PhasePortrait --all --out=dist --arch=x64 --app-version=1.0.3 --icon=phaseportrait_icon.ico --overwrite",
+    "pack:all": "electron-packager . PhasePortrait --all --out=dist --arch=x64 --app-version=1.0.3 --icon=icons/phaseportrait_icon.ico --overwrite",
     "build": "npm run pack:all"
 
   },

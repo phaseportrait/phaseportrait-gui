@@ -1,4 +1,8 @@
-from phaseportrait import PhasePortrait2DManager
+try:
+    from phaseportrait import PhasePortrait2DManager
+except ImportError:
+    from phaseportrait_local.phaseportrait import PhasePortrait2DManager
+    
 from sys import argv
 
 if __name__ == '__main__':
