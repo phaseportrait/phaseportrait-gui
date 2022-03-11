@@ -2,7 +2,6 @@
 
 const electron = require('electron');
 const { app, BrowserWindow, ipcMain } = electron;
-// const spawn = require('child_process').spawn;
 const fs = require('fs');
 
 let {PythonShell} = require('python-shell')
@@ -32,8 +31,7 @@ function createMainWindow() {
 	mainWindow.loadFile('index.html');
 
 	// Open the DevTools
-	// TODO: quitar esto
-	// mainWindow.webContents.openDevTools();
+	mainWindow.webContents.openDevTools();
 
 	// Link handler
 	mainWindow.webContents.setWindowOpenHandler(({ url }) => {
@@ -45,7 +43,7 @@ function createMainWindow() {
 	mainWindow.on('closed', () => {
 		mainWindow = null;
 	});
-};
+}
 
 function emptySVGDir() {
 	fs.readdir(`${__dirname}/svg`, (err, files) => {
@@ -88,26 +86,13 @@ app.on('quit', () => {
 	// do some additional cleanup
 });
 
-
-// function runPythonScript(plot = true, plotParams = []) {
-// 	return new Promise(function (success, nosuccess) {
-// 		const script = spawn('python', [
-// 			`${__dirname}/pp-launcher.py`,
-// 			plot ? '--plot' : '--code',
-// 			JSON.stringify(plotParams)
-// 		]);
-// 		script.stdout.on('data', success);
-// 		script.stderr.on('data', nosuccess);
-// 	});
-// }
-
 function runPythonScript(plot = true, plotParams = []) {
 	return new Promise(function (success, nosuccess) {
 		let options = {
 			args: [plot ? '--plot' : '--code',
 				JSON.stringify(plotParams)]
 		}
-		PythonShell.run(`${__dirname}/phaseportrait-launcher.py`, options, function (err, results) {
+		PythonShell.run(`${__dirname}/phaseportrait-launcher.py`, options, (err, results) => {
 			if (err) nosuccess(err);
 			success(results)
 		});

@@ -1,10 +1,14 @@
+// SCROLLBAR
+
 *::-webkit-scrollbar {
   width: 15px;
   background-color: rgb(241, 241, 241);
 }
+
 *::-webkit-scrollbar-corner {
   background: rgba(0, 0, 0, 0);
 }
+
 *::-webkit-scrollbar-thumb {
   background-color: #ccc;
   border-radius: 1rem;
@@ -13,18 +17,24 @@
   min-width: 32px;
   min-height: 32px;
 }
+
 *::-webkit-scrollbar-track {
   background-color: rgba(0, 0, 0, 0);
 }
 
+// CODEMIRROR
+
+.CodeMirror,
 .dark {
   *::-webkit-scrollbar {
     width: 15px;
     background-color: rgba(0, 0, 0, 0);
   }
+
   *::-webkit-scrollbar-corner {
     background: rgba(0, 0, 0, 0);
   }
+
   *::-webkit-scrollbar-thumb {
     background-color: rgb(80, 80, 80);
     border-radius: 1rem;
@@ -33,13 +43,13 @@
     min-width: 32px;
     min-height: 32px;
   }
+
   *::-webkit-scrollbar-track {
     background-color: rgba(0, 0, 0, 0);
   }
 
   .CodeMirror {
-    border: 1px solid white;
-    border-color: rgba(107, 114, 128, 1);
+    border: 1px solid rgba(107, 114, 128, 1);
   }
 }
 
@@ -48,27 +58,41 @@
   min-height: 3rem;
   height: auto !important;
   border-radius: 0.25rem;
+}
 
-  *::-webkit-scrollbar {
-    width: 15px;
-    background-color: rgba(0, 0, 0, 0);
-  }
-  *::-webkit-scrollbar-corner {
-    background: rgba(0, 0, 0, 0);
-  }
-  *::-webkit-scrollbar-thumb {
-    background-color: rgb(80, 80, 80);
-    border-radius: 1rem;
-    border: 4px solid rgba(0, 0, 0, 0);
-    background-clip: content-box;
-    min-width: 32px;
-    min-height: 32px;
-  }
-  *::-webkit-scrollbar-track {
-    background-color: rgba(0, 0, 0, 0);
-  }
+// LAYOUT
+
+#parameters_div, #credits-area, body {
+  transition: 0.3s all linear;
 }
 
 .form-area {
   max-width: 40%;
+}
+
+.image-area {
+  $this: &;
+
+  &__container {
+    display: flex;
+  }
+
+  &--zoom {
+    z-index: 2;
+    position: absolute;
+    width: 96%;
+    height: 96%;
+    top: 1rem;
+    left: 1rem;
+
+    #{$this}__container {
+      height: 100%;
+      width: 100%;
+      display: flex;
+
+      img {
+        object-fit: contain;
+      }
+    }
+  }
 }

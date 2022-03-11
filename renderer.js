@@ -8,10 +8,9 @@ let editor;
 let code_display;
 const defaultFunction = 'def a(x, y, *, w=0):\n\treturn y, -x';
 
-var dF_args_length = 0;
-var dF_args = {};
-var parameters_visible = true
-var plot_visible = true
+let dF_args_length = 0;
+let dF_args = {};
+let plot_visible = true;
 
 window.onload = () => {
     editor = cm.fromTextArea(document.getElementById('codemirror-container'), {
@@ -20,7 +19,7 @@ window.onload = () => {
         lineNumbers: true,
         placeholder: defaultFunction,
     });
-    code_display= cm.fromTextArea(document.getElementById('codemirror-container-code-display'), {
+    code_display = cm.fromTextArea(document.getElementById('codemirror-container-code-display'), {
         mode: 'python',
         theme: 'material',
         lineNumbers: true,
@@ -29,7 +28,7 @@ window.onload = () => {
 
 electron.ipcRenderer.on("load-svg", (event, filename) => {
     // console.log(`${filename}`);
-    if (!plot_visible){
+    if (!plot_visible) {
         document.getElementById("img").style.display = null;
         document.getElementById("code_div").style.display = 'none';
         plot_visible = !plot_visible;
@@ -78,37 +77,35 @@ function update_dF_args() {
     dF_args_new = {};
     dF_args_regex = /(?<=\*\s*\,)[\sa-zA-Z0-9_=.,]*/;
     dF_args_match = params['dF'].match(dF_args_regex);
-    if (dF_args_match){
+    if (dF_args_match) {
         dF_args_match[0] = dF_args_match[0].replace(/\s+/g, '');
         dF_args_match[0].split(',').forEach(parameter => {
             if (parameter.match(/=/)) {
                 parameter_splited = parameter.split(/=/)
                 dF_args_new[parameter_splited[0]] = Number(parameter_splited[1])
-            }
-            else{
+            } else {
                 dF_args_new[parameter] = 0
             }
         });
     }
-    Object.keys(dF_args_new).forEach(function(key) {
+    Object.keys(dF_args_new).forEach(function (key) {
         if (key in dF_args) {
             dF_args_new[key] = Number(document.getElementById(`${key}_value`).value)
-        }
-        else{
+        } else {
             add_dFarg(key, dF_args[key]);
             dF_args_length += 1;
-        };
+        }
     });
-    Object.keys(dF_args).forEach(function(key) {
+    Object.keys(dF_args).forEach(function (key) {
         if (!(key in dF_args_new)) {
             remove_dFarg(key);
             dF_args_length -= 1;
-        };
+        }
     });
     if (dF_args_length == 0) {
         document.getElementById('dF_args_div').style.display = 'none'
-    };
-    
+    }
+
     dF_args = dF_args_new;
 
 }
@@ -118,17 +115,17 @@ function update_params() {
 
     // dF
     dF = editor.getValue();
-    params['dF'] = dF==='' ? defaultFunction : dF;
+    params['dF'] = dF === '' ? defaultFunction : dF;
 
     // dF_args_new
     update_dF_args()
     params['dF_args'] = dF_args
 
     // Range
-    x_min = document.getElementById('x_min').value? Number(document.getElementById('x_min').value) : 0;
-    x_max = document.getElementById('x_max').value? Number(document.getElementById('x_max').value) : 1;
-    y_min = document.getElementById('y_min').value? Number(document.getElementById('y_min').value) : 0;
-    y_max = document.getElementById('y_max').value? Number(document.getElementById('y_max').value) : 1;
+    x_min = document.getElementById('x_min').value ? Number(document.getElementById('x_min').value) : 0;
+    x_max = document.getElementById('x_max').value ? Number(document.getElementById('x_max').value) : 1;
+    y_min = document.getElementById('y_min').value ? Number(document.getElementById('y_min').value) : 0;
+    y_max = document.getElementById('y_max').value ? Number(document.getElementById('y_max').value) : 1;
     params['Range'] = {
         x_min,
         x_max,
@@ -161,7 +158,7 @@ function update_params() {
     // Nullclines
     offset = Number(document.getElementById('offset').value);
     precision = Number(document.getElementById('precision').value);
-    if (document.getElementById('precision').value){
+    if (document.getElementById('precision').value) {
         if (!offset) offset = 0;
         document.getElementById('offset').value
         params['nullcline'] = {
@@ -172,7 +169,6 @@ function update_params() {
 
     params['path'] = `${__dirname}/svg/`
 
-    // console.log(params);
     return params
 }
 
@@ -187,21 +183,32 @@ function get_python_code() {
     electron.ipcRenderer.send("request-code", params);
 }
 
-function zoom_image() {
-    parameters_visible = !parameters_visible;
-    parameters_div = document.getElementById("parameters_div");
-    if (parameters_visible) {
-        parameters_div.style.display = null;
+function toggleDarkMode() {
+    const root = document.getElementsByTagName( 'html' )[0];
+    if (root.classList.contains('dark')) root.classList.remove('dark')
+    else root.classList.add('dark')
+}
+
+function toggleImageZoom() {
+    const imageArea = document.getElementById('image-area');
+    const formArea = document.getElementById('parameters_div');
+    const creditsArea = document.getElementById('credits-area');
+
+    if (imageArea.classList.contains('image-area--zoom')) {
+        imageArea.classList.remove('image-area--zoom');
+        formArea.style.display = 'flex';
+        creditsArea.style.display = 'block';
+    } else {
+        imageArea.classList.add('image-area--zoom');
+        formArea.style.display = 'none';
+        creditsArea.style.display = 'none';
     }
-    else {
-        parameters_div.style.display = 'none';
-    }
-};
+}
 
 function exit_code_display() {
-    if (!plot_visible){
+    if (!plot_visible) {
         document.getElementById("img").style.display = null;
         document.getElementById("code_div").style.display = 'none';
         plot_visible = !plot_visible;
     }
-};
+}
