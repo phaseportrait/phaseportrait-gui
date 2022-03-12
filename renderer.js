@@ -9,10 +9,11 @@ let editor;
 let code_display;
 const defaultFunction = 'def a(x, y, *, w=0):\n\treturn y, -x';
 
-let dF_args_length = 0;
+let params = {};
 let dF_args = {};
-let plot_visible = true;
+let dF_args_length = 0;
 
+let plot_visible = true;
 let alertId = 0;
 
 window.onload = () => {
@@ -26,6 +27,10 @@ window.onload = () => {
         mode: 'python',
         theme: 'material',
         lineNumbers: true,
+    });
+
+    editor.on('change', e => {
+        update_dF_args(e.getValue());
     });
 }
 
@@ -83,10 +88,13 @@ function remove_dFarg(param_name) {
     document.getElementById(`${param_name}_div`)?.remove();
 }
 
-function update_dF_args() {
+function update_dF_args(functionValue) {
     dF_args_new = {};
     dF_args_regex = /(?<=\*\s*,)[\sa-zA-Z0-9_=.,]*/;
-    dF_args_match = params['dF'].match(dF_args_regex);
+
+    if (!dF_args_regex.test(functionValue)) return;
+
+    dF_args_match = functionValue.match(dF_args_regex);
     if (dF_args_match) {
         dF_args_match[0] = dF_args_match[0].replace(/\s+/g, '');
         dF_args_match[0].split(',').forEach(parameter => {
@@ -124,12 +132,11 @@ function update_params() {
     params = {};
 
     // dF
-    dF = editor.getValue();
-    params['dF'] = dF === '' ? defaultFunction : dF;
+    params['dF'] = editor.getValue() ?? defaultFunction;
 
     // dF_args_new
-    update_dF_args()
-    params['dF_args'] = dF_args
+    update_dF_args(params['dF']);
+    params['dF_args'] = dF_args;
 
     // Range
     x_min = document.getElementById('x_min').value ? Number(document.getElementById('x_min').value) : 0;
