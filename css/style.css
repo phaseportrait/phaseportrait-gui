@@ -89,3 +89,8 @@
     transform: scale(0.7); }
   100% {
     transform: scale(0.8); } }
+
+#error {
+  padding: 8rem 0; }
+  #error img {
+    width: 10rem; }

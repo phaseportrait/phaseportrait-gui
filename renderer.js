@@ -50,7 +50,9 @@ electron.ipcRenderer.on("show-code", (event, code) => {
 });
 
 electron.ipcRenderer.on("show-error", (event, message) => {
-    addAlert(message)
+    addAlert(message);
+    document.getElementById('error').style.display = 'flex';
+    setLoadingState(false);
 });
 
 
@@ -197,6 +199,7 @@ function setLoadingState(isLoading) {
     if (isLoading) {
         document.getElementById('img').style.display = 'none';
         document.getElementById('code_div').style.display = 'none';
+        document.getElementById('error').style.display = 'none';
     }
     document.getElementById('loader').style.display = isLoading ? 'flex' : 'none';
 }
