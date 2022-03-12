@@ -239,6 +239,7 @@ function exit_code_display() {
 
 function addAlert(message) {
     const alerts = document.getElementById('alerts');
+    const alertsContainer = document.getElementById('alerts-container');
     const newAlertId = alertId++;
 
     const newAlert = `
@@ -257,8 +258,23 @@ function addAlert(message) {
     </div>`;
 
     alerts.innerHTML = newAlert + alerts.innerHTML;
+    alertsContainer.style.display = 'flex';
 }
 
 function removeAlert(id) {
+    const alerts = document.getElementById('alerts');
+    const alertsContainer = document.getElementById('alerts-container');
+
     document.getElementById(id).remove();
+    if (!alerts.innerHTML.trim()) {
+        alertsContainer.style.display = 'none';
+    }
+}
+
+function removeAllAlerts() {
+    const alerts = document.getElementById('alerts');
+    const alertsContainer = document.getElementById('alerts-container');
+
+    alertsContainer.style.display = 'none';
+    alerts.innerHTML = '';
 }

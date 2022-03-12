@@ -300,7 +300,12 @@
         </div>
 
         <!-- Errors area -->
-        <div id="alerts" class="flex flex-col gap-2 overflow-auto"></div>
+        <div id="alerts-container" class="container flex flex-col overflow-auto" style="display: none">
+            <div onclick="removeAllAlerts()"
+                 class="text-sm ml-auto text-red-600 hover:underline hover:cursor-pointer mb-2">Clear all
+            </div>
+            <div id="alerts" class="flex flex-col gap-2 overflow-auto"></div>
+        </div>
 
         <!-- Credits area -->
         <div id="credits-area" class="container flex flex-col items-end mt-auto font-mono text-right">
