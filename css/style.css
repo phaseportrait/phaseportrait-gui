@@ -48,8 +48,11 @@
   height: auto !important;
   border-radius: 0.25rem; }
 
+.code-display .CodeMirror {
+  flex: 1; }
+
 #parameters_div, #credits-area, body {
-  transition: 0.2s all ease; }
+  transition: 0.3s all linear; }
 
 .form-area {
   max-width: 40%; }

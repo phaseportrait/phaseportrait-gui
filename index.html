@@ -68,8 +68,8 @@
                             transition duration-200 align-top
                             bg-no-repeat bg-center bg-contain float-left
                             cursor-pointer"
-                           type="checkbox" id="polar">
-                    <label class="inline-block text-gray-800 dark:text-white text-sm" for="polar">
+                           type="checkbox" id="Polar">
+                    <label class="inline-block text-gray-800 dark:text-white text-sm select-none" for="Polar">
                         Polar
                     </label>
                 </div>
@@ -78,8 +78,8 @@
             <!-- Arguments -->
 
             <div id="dF_args_div" class="container flex flex-col items-center gap-2" style="display: none;">
-                <div class="w-full flex items-center gap-2 mb-1">
-                    <span>Parameters</span>
+                <div class="w-full flex items-center gap-2 mb-3 mt-1 dark:text-gray-300 text-sm">
+                    <span>Arguments</span>
                     <span class="w-full h-[1px] bg-gray-200"></span>
                 </div>
 
@@ -136,7 +136,7 @@
                     <!-- TODO: si el valor es superior a 3 que se ponga en rojo o de una alerta. Porque se ralentiza mucho -->
                     <div class="field w-full" style="float: right; width: 48%;">
                         <label for="Density" class="label">Density</label>
-                        <input id="Density" type="number" placeholder="3" class="input">
+                        <input id="Density" type="number" placeholder="1" class="input">
                     </div>
                 </div>
 
@@ -214,13 +214,11 @@
             <button onclick="plot()" class="action-button bg-blue-500 hover:bg-blue-600">
                 <svg class="h-6 w-6 text-white inline-block mr-1" width="24" height="24" viewBox="0 0 24 24"
                      stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
-
                     <path stroke="none" d="M0 0h24v24H0z"/>
                     <path d="M3 21v-4a4 4 0 1 1 4 4h-4"/>
                     <path d="M21 3a16 16 0 0 0 -12.8 10.2"/>
                     <path d="M21 3a16 16 0 0 1 -10.2 12.8"/>
                     <path d="M10.6 9a9 9 0 0 1 4.4 4.4"/>
-
                 </svg>
                 Plot
             </button>
@@ -232,6 +230,7 @@
     <!-- Image and credits area -->
     <div class="
         container
+        sm:max-w-[50%] lg:max-w-[60%]
         flex flex-col gap-6
         pb-6 sm:pb-0
     ">
@@ -246,32 +245,19 @@
             <!-- Image and full-screen floating button -->
             <div class="image-area__container relative">
 
-                <img id="img" src="svg/default.svg" class="
+                <img id="img" style="display: none" src="svg/default.svg" class="
                     max-h-full
                     flex-1
                     bg-gray-100
                     dark:rounded-xl
                 ">
-                <!-- <div class="hidden h-72 flex">
-                  <p class="
-                              text-gray-500 dark:text-gray-300
-                              text-center
-                              m-auto
-                              w-full
-                          ">No plot yet</p>
-                </div> -->
 
                 <!-- Code display -->
-                <div id="code_div" style="display: none;" class="
+                <div id="code_div" style="display: flex;" class="
                     container
-                    flex-1
-                    p-6
-                    w-full
-                    max-h-full
-                    max-h-full
-                    bg-gray-100 dark:bg-gray-800
-                    shadow-lg
-                    rounded-md
+                    flex flex-col
+                    max-w-full
+                    z-0
                 ">
                     <h1 class="
                         text-3xl font-bold leading-7
@@ -283,13 +269,13 @@
 
                     <div class="w-full h-full overflow-auto pr-3 flex gap-2 rounded-md">
                         <!-- Editor -->
-                        <div class="field w-full mb-1">
+                        <div class="code-display flex flex-col field w-full mb-1">
                             <textarea name="code" id="codemirror-container-code-display"></textarea>
                         </div>
                     </div>
                 </div>
 
-                <button onclick="toggleImageZoom()" class="zoom-button">
+                <button onclick="toggleImageZoom()" class="zoom-button m-[-0.5rem]">
                     <svg class="h-6 w-6 inline-block" width="24" height="24" viewBox="0 0 24 24" stroke-width="2"
                          stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
                         <path stroke="none" d="M0 0h24v24H0z"/>
@@ -302,14 +288,18 @@
             </div>
         </div>
 
-        <div id="credits-area" class="container mt-auto font-mono text-right">
-            <div class="block text-gray-500 dark:text-gray-300 text-sm">
+        <!-- Errors area -->
+        <div id="alerts" class="flex flex-col gap-2 overflow-auto"></div>
+
+        <!-- Credits area -->
+        <div id="credits-area" class="container flex flex-col items-end mt-auto font-mono text-right">
+            <div class="block text-gray-500 dark:text-gray-300 text-xs">
                 CORE by
                 <a class="hover:underline" target="_blank" href="https://github.com/Loracio">Víctor Loras Herrero</a>
                 and
                 <a class="hover:underline" target="_blank" href="https://github.com/QuanticPony">Unai Lería Fortea</a>
             </div>
-            <div class="block text-gray-500 dark:text-gray-300 text-sm">
+            <div class="block text-gray-500 dark:text-gray-300 text-xs">
                 GUI by
                 <a class="hover:underline" target="_blank" href="https://github.com/aileria">Aitor Lería Fortea</a>
                 and
@@ -322,6 +312,7 @@
                 hover:underline cursor-pointer
                 justify-end
                 mt-2
+                w-fit
             ">
                 <svg class="h-5 w-5" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"
                      fill="none" stroke-linecap="round" stroke-linejoin="round">

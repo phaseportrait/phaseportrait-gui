@@ -60,6 +60,12 @@
   border-radius: 0.25rem;
 }
 
+.code-display {
+  .CodeMirror {
+    flex: 1;
+  }
+}
+
 // LAYOUT
 
 #parameters_div, #credits-area, body {

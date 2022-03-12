@@ -6,9 +6,7 @@ const fs = require('fs');
 
 let {PythonShell} = require('python-shell')
 
-
-// TODO: quitar?
-const myConsole = new console.Console(fs.createWriteStream(`${__dirname}/log.txt`));
+const logger = new console.Console(fs.createWriteStream(`${__dirname}/log.txt`));
 const python_options = fs.createReadStream(`${__dirname}/python_settings.json`)
 
 // Keep a global reference of the mainWindowdow object to avoid garbage collector
@@ -19,7 +17,7 @@ function createMainWindow() {
 	mainWindow = new BrowserWindow({
 		width: 1200,
 		height: 800,
-		icon: __dirname + '/phaseportrait_icon.png',
+		icon: __dirname + '/icons/phaseportrait_icon.png',
 		resizeable: true,
 		webPreferences: {
 			nodeIntegration: true,
@@ -29,9 +27,6 @@ function createMainWindow() {
 
 	// Load the index page
 	mainWindow.loadFile('index.html');
-
-	// Open the DevTools
-	mainWindow.webContents.openDevTools();
 
 	// Link handler
 	mainWindow.webContents.setWindowOpenHandler(({ url }) => {
@@ -50,7 +45,6 @@ function emptySVGDir() {
 		if (err) throw err;
 		for (const file of files) {
 			if (file === 'default.svg') continue;
-			// fs.unlinkSync(path.join('svg', file), err => {
 			fs.unlinkSync(`${__dirname}/svg/${file}`, err => {
 				if (err) throw err;
 			});
@@ -63,7 +57,6 @@ app.on('ready', () => {
 	createMainWindow();
 
 	ipcMain.on('request-plot', (event, plotParams) => {
-		// myConsole.log(plotParams);
 		plot(plotParams);
 	})
 	ipcMain.on('request-code', (event, plotParams) => {
@@ -108,15 +101,19 @@ function showPythonCode(filename) {
 	mainWindow.webContents.send('show-code', filename)
 }
 
+function showError(message) {
+	mainWindow.webContents.send('show-error', message)
+}
+
 function plot(params) {
 	runPythonScript(true, params)
 		.then((data) => {
 			if (data==0) return;
-			// myConsole.log(data);
 			updatePlotSVG(data);
 		})
 		.catch((error) => {
-			myConsole.log('error', error);
+			logger.log('error', error);
+			showError(error);
 		});
 }
 
@@ -126,6 +123,7 @@ function generateCode(params) {
 			showPythonCode(data.join('\n'))
 		})
 		.catch((error) => {
-			myConsole.log('error', error);
+			logger.log('error', error);
+			showError(error);
 		});
 }

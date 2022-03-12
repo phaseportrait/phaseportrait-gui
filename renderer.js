@@ -1,6 +1,7 @@
 require('codemirror/mode/python/python');
 require('codemirror/addon/scroll/simplescrollbars');
 require('codemirror/addon/display/placeholder');
+
 const electron = require("electron");
 const cm = require('codemirror');
 
@@ -11,6 +12,8 @@ const defaultFunction = 'def a(x, y, *, w=0):\n\treturn y, -x';
 let dF_args_length = 0;
 let dF_args = {};
 let plot_visible = true;
+
+let alertId = 0;
 
 window.onload = () => {
     editor = cm.fromTextArea(document.getElementById('codemirror-container'), {
@@ -39,10 +42,14 @@ electron.ipcRenderer.on("load-svg", (event, filename) => {
 electron.ipcRenderer.on("show-code", (event, code) => {
     if (plot_visible) {
         document.getElementById("img").style.display = 'none';
-        document.getElementById("code_div").style.display = null;
+        document.getElementById("code_div").style.display = 'flex';
         plot_visible = !plot_visible;
     }
     code_display.setValue(code);
+});
+
+electron.ipcRenderer.on("show-error", (event, message) => {
+    addAlert(message)
 });
 
 
@@ -75,7 +82,7 @@ function remove_dFarg(param_name) {
 
 function update_dF_args() {
     dF_args_new = {};
-    dF_args_regex = /(?<=\*\s*\,)[\sa-zA-Z0-9_=.,]*/;
+    dF_args_regex = /(?<=\*\s*,)[\sa-zA-Z0-9_=.,]*/;
     dF_args_match = params['dF'].match(dF_args_regex);
     if (dF_args_match) {
         dF_args_match[0] = dF_args_match[0].replace(/\s+/g, '');
@@ -184,7 +191,7 @@ function get_python_code() {
 }
 
 function toggleDarkMode() {
-    const root = document.getElementsByTagName( 'html' )[0];
+    const root = document.getElementsByTagName('html')[0];
     if (root.classList.contains('dark')) root.classList.remove('dark')
     else root.classList.add('dark')
 }
@@ -197,7 +204,7 @@ function toggleImageZoom() {
     if (imageArea.classList.contains('image-area--zoom')) {
         imageArea.classList.remove('image-area--zoom');
         formArea.style.display = 'flex';
-        creditsArea.style.display = 'block';
+        creditsArea.style.display = 'flex';
     } else {
         imageArea.classList.add('image-area--zoom');
         formArea.style.display = 'none';
@@ -211,4 +218,30 @@ function exit_code_display() {
         document.getElementById("code_div").style.display = 'none';
         plot_visible = !plot_visible;
     }
+}
+
+function addAlert(message) {
+    const alerts = document.getElementById('alerts');
+    const newAlertId = alertId++;
+
+    const newAlert = `
+    <div id="alert-${newAlertId}" class="
+        flex bg-red-100 text-red-700 px-4 py-3 relative
+        dark:bg-red-300 dark:text-red-900 rounded-md
+    ">
+        <span class="block flex-1 sm:inline pr-1">${message}</span>
+        <span onclick="removeAlert('alert-${newAlertId}')" class="cursor-pointer">
+            <svg class="fill-current h-6 w-6 text-red-500 hover:text-red-700 dark:text-red-600 dark:hover:text-red-900"
+                viewBox="0 0 20 20"><title>Close</title><path
+                d="M14.348 14.849a1.2 1.2 0 0 1-1.697 0L10 11.819l-2.651 3.029a1.2 1.2 0 1
+                1-1.697-1.697l2.758-3.15-2.759-3.152a1.2 1.2 0 1 1 1.697-1.697L10 8.183l2.651-3.031a1.2 1.2 0 1 1
+                1.697 1.697l-2.758 3.152 2.758 3.15a1.2 1.2 0 0 1 0 1.698z"/></svg>
+        </span>
+    </div>`;
+
+    alerts.innerHTML = newAlert + alerts.innerHTML;
+}
+
+function removeAlert(id) {
+    document.getElementById(id).remove();
 }
