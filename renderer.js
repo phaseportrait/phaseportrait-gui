@@ -30,22 +30,23 @@ window.onload = () => {
 }
 
 electron.ipcRenderer.on("load-svg", (event, filename) => {
-    // console.log(`${filename}`);
     if (!plot_visible) {
-        document.getElementById("img").style.display = null;
         document.getElementById("code_div").style.display = 'none';
         plot_visible = !plot_visible;
     }
     document.getElementById("img").src = `${__dirname}/svg/${filename}`;
+    document.getElementById("img").style.display = 'flex';
+    setLoadingState(false);
 });
 
 electron.ipcRenderer.on("show-code", (event, code) => {
     if (plot_visible) {
         document.getElementById("img").style.display = 'none';
-        document.getElementById("code_div").style.display = 'flex';
         plot_visible = !plot_visible;
     }
+    document.getElementById("code_div").style.display = 'flex';
     code_display.setValue(code);
+    setLoadingState(false);
 });
 
 electron.ipcRenderer.on("show-error", (event, message) => {
@@ -182,12 +183,22 @@ function update_params() {
 function plot() {
     exit_code_display()
     params = update_params();
+    setLoadingState(true);
     electron.ipcRenderer.send("request-plot", params);
 }
 
 function get_python_code() {
     params = update_params();
+    setLoadingState(true);
     electron.ipcRenderer.send("request-code", params);
+}
+
+function setLoadingState(isLoading) {
+    if (isLoading) {
+        document.getElementById('img').style.display = 'none';
+        document.getElementById('code_div').style.display = 'none';
+    }
+    document.getElementById('loader').style.display = isLoading ? 'flex' : 'none';
 }
 
 function toggleDarkMode() {
@@ -196,19 +207,22 @@ function toggleDarkMode() {
     else root.classList.add('dark')
 }
 
-function toggleImageZoom() {
+function toggleFullScreenMode() {
     const imageArea = document.getElementById('image-area');
     const formArea = document.getElementById('parameters_div');
     const creditsArea = document.getElementById('credits-area');
+    const resultCode = document.getElementById('result-code');
 
     if (imageArea.classList.contains('image-area--zoom')) {
         imageArea.classList.remove('image-area--zoom');
         formArea.style.display = 'flex';
         creditsArea.style.display = 'flex';
+        resultCode.classList.remove('code-display--full-screen');
     } else {
         imageArea.classList.add('image-area--zoom');
         formArea.style.display = 'none';
         creditsArea.style.display = 'none';
+        resultCode.classList.add('code-display--full-screen');
     }
 }
 

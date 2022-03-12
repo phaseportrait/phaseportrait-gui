@@ -245,7 +245,12 @@
             <!-- Image and full-screen floating button -->
             <div class="image-area__container relative">
 
-                <img id="img" style="display: none" src="svg/default.svg" class="
+                <div id="loader" class="container flex justify-center items-center py-12 select-none"
+                     style="display: none">
+                    <img src="./icons/phaseportrait_icon.ico" alt="">
+                </div>
+
+                <img id="img" src="svg/default.svg" class="
                     max-h-full
                     flex-1
                     bg-gray-100
@@ -253,7 +258,7 @@
                 ">
 
                 <!-- Code display -->
-                <div id="code_div" style="display: flex;" class="
+                <div id="code_div" style="display: none;" class="
                     container
                     flex flex-col
                     max-w-full
@@ -269,13 +274,13 @@
 
                     <div class="w-full h-full overflow-auto pr-3 flex gap-2 rounded-md">
                         <!-- Editor -->
-                        <div class="code-display flex flex-col field w-full mb-1">
+                        <div id="result-code" class="code-display flex flex-col field w-full mb-1">
                             <textarea name="code" id="codemirror-container-code-display"></textarea>
                         </div>
                     </div>
                 </div>
 
-                <button onclick="toggleImageZoom()" class="zoom-button m-[-0.5rem]">
+                <button onclick="toggleFullScreenMode()" class="zoom-button m-[-0.5rem]">
                     <svg class="h-6 w-6 inline-block" width="24" height="24" viewBox="0 0 24 24" stroke-width="2"
                          stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
                         <path stroke="none" d="M0 0h24v24H0z"/>

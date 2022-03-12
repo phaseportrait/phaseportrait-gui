@@ -39,7 +39,8 @@
         @apply flex justify-center items-center
         p-0
         w-10 h-10
-        bg-blue-100 hover:bg-blue-500
+        bg-blue-200 hover:bg-blue-500
+        dark:bg-blue-400 dark:hover:bg-blue-500
         rounded-full
         active:shadow-lg
         shadow

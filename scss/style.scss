@@ -63,6 +63,14 @@
 .code-display {
   .CodeMirror {
     flex: 1;
+    max-height: 24rem;
+  }
+}
+
+.code-display--full-screen {
+  .CodeMirror {
+    flex: 1;
+    max-height: unset;
   }
 }
 
@@ -100,5 +108,24 @@
         object-fit: contain;
       }
     }
+  }
+}
+
+
+// LOADER
+
+#loader {
+  animation: pulse 1.5s ease infinite;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(0.8);
+  }
+  50% {
+    transform: scale(0.7);
+  }
+  100% {
+    transform: scale(0.8);
   }
 }
