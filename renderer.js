@@ -78,10 +78,12 @@ function add_dFarg(param_name, placeholder) {
     param_input.id = `${param_name}_value`;
     param_input.type = "number";
     param_input.value = String(placeholder);
-    param_input.className = "appearance-none block w-full bg-gray-200 dark:bg-[#263238] text-gray-700 border border-gray-200 dark:border-gray-500 rounded py-3 px-4 mb-3 dark:text-gray-100 leading-tight focus:outline-none focus:bg-white focus:border-gray-500";
+    param_input.className = "appearance-none block w-full bg-gray-200 dark:bg-[#263238] text-gray-700 " +
+        "border border-gray-200 dark:border-gray-500 rounded py-3 px-4 mb-3 dark:text-gray-100 leading-tight " +
+        "focus:outline-none focus:bg-white focus:border-gray-500";
     param_div.append(param_input);
 
-    document.getElementById('dF_args_containter').append(param_div)
+    document.getElementById('dF_args_container').append(param_div);
 }
 
 function remove_dFarg(param_name) {
@@ -89,17 +91,18 @@ function remove_dFarg(param_name) {
 }
 
 function update_dF_args(functionValue) {
-    dF_args_new = {};
-    dF_args_regex = /(?<=\*\s*,)[\sa-zA-Z0-9_=.,]*/;
+    const dF_args_new = {};
+    const dF_args_regex = /(?<=\*\s*,)[^\\)]*/;
 
     if (!dF_args_regex.test(functionValue)) return;
 
-    dF_args_match = functionValue.match(dF_args_regex);
+    const dF_args_match = functionValue.match(dF_args_regex);
     if (dF_args_match) {
-        dF_args_match[0] = dF_args_match[0].replace(/\s+/g, '');
-        dF_args_match[0].split(',').forEach(parameter => {
+        const arguments = dF_args_match[0].replace(/\s+/g, '').split(',')
+        arguments.forEach(parameter => {
+            if (!parameter) return;
             if (parameter.match(/=/)) {
-                parameter_splited = parameter.split(/=/)
+                const parameter_splited = parameter.split(/=/)
                 dF_args_new[parameter_splited[0]] = Number(parameter_splited[1])
             } else {
                 dF_args_new[parameter] = 0
@@ -120,12 +123,11 @@ function update_dF_args(functionValue) {
             dF_args_length -= 1;
         }
     });
-    if (dF_args_length == 0) {
+    if (dF_args_length === 0) {
         document.getElementById('dF_args_div').style.display = 'none'
     }
 
     dF_args = dF_args_new;
-
 }
 
 function update_params() {
