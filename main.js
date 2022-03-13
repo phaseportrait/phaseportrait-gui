@@ -17,7 +17,7 @@ function createMainWindow() {
     mainWindow = new BrowserWindow({
         width: 1200,
         height: 800,
-        icon: __dirname + '/icons/phaseportrait_icon.png',
+        icon: __dirname + '/icons/phaseportrait_icon.ico',
         resizeable: true,
         webPreferences: {
             nodeIntegration: true,
