@@ -134,7 +134,7 @@ function update_params() {
     params = {};
 
     // dF
-    params['dF'] = editor.getValue() ?? defaultFunction;
+    params['dF'] = !!editor.getValue() ? editor.getValue() : defaultFunction;
 
     // dF_args_new
     update_dF_args(params['dF']);
