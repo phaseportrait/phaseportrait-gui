@@ -1,6 +1,6 @@
 # PhasePortrait-GUI
 
-PhasePortrait-GUI is a Graphical User Interface of our library [phaseportrait](https://github.com/phaseportrait/phaseportrait). Only 2D phase diagrams at supported at the moment.
+PhasePortrait-GUI is a Graphical User Interface of our library [PhasePortrait](https://github.com/phaseportrait/phaseportrait). Only 2D phase diagrams at supported at the moment, with no plans of adding additional features.
 
 Its intention is to provide access for beginners in Python or in our library to this resource. But also allowing to get the Python equivalent code for futher and more complex uses.
 
@@ -9,27 +9,31 @@ In order to generate the plots and the Python code it is **necessary** that Pyth
 ```
 $ python
 ```
-There are also Python libraries as numpy or matplotlib that are required. We recommend prior to use this program to run the following:
+And [PhasePortrait](https://github.com/phaseportrait/phaseportrait) must me installed in that Python. You can install it with
 ```
 $ pytohn -m pip install phaseportrait
 ```
-As it will install all the required additional dependencies. 
+This will install all necesary dependencies required.
 
-At the moment it is not mandatory to have phaseportrait installed.
+
+# Installation
+Go to the [releases page](https://github.com/phaseportrait/phaseportrait-gui/releases) and download the aplication matching your computer architecture. When downloaded unzip the file.
+
+If there is not a matching file you can [build](#how-to-build) it yourself.
 
 # Documentation
 Please visit the   [main documentation page](https://phaseportrait.github.io/) for more information.
 
 Also, we encourage you to let us know any bugs, malfunctions, improvements or even feedback if you are a marvelous person.
 
-## How to build
-_______________
-**This part is not complete**
 
-For windows:
+# How to build
+This is only necesary if the computer architecture is not already in the [releases page](https://github.com/phaseportrait/phaseportrait-gui/releases).
+
+
+To build for the current machine you can build the aplication with
 ```
 $ npm install
 $ npm run build
 ```
-
-The program will be located at `./dist/`. 
+The program will be located at `./dist/`.
