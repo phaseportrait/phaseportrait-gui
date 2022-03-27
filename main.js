@@ -28,7 +28,7 @@ function createMainWindow() {
     // Load the index page
     mainWindow.loadFile('index.html');
 
-    mainWindow.openDevTools()
+    // mainWindow.openDevTools()
 
     // Link handler
     mainWindow.webContents.setWindowOpenHandler(({url}) => {
