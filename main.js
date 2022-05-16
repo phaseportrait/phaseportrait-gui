@@ -22,13 +22,15 @@ function createMainWindow() {
         webPreferences: {
             nodeIntegration: true,
             contextIsolation: false,
-        }
+        },
+        // TODO: no tengo ni idea de qué es esto
+        slashes: true
     });
 
     // Load the index page
     mainWindow.loadFile('index.html');
 
-    // mainWindow.openDevTools()
+    mainWindow.openDevTools()
 
     // Link handler
     mainWindow.webContents.setWindowOpenHandler(({url}) => {
@@ -81,6 +83,13 @@ app.on('quit', () => {
     // do some additional cleanup
 });
 
+app.on('window-all-closed', () => {
+    // For MacOs
+    if (process.platform !== 'darwin') {
+      app.quit()
+    }
+  })
+
 function runPythonScript(plot = true, plotParams = []) {
     return new Promise(function (success, nosuccess) {
         let options = {
@@ -95,8 +104,11 @@ function runPythonScript(plot = true, plotParams = []) {
 }
 
 
+// TODO: cambio provisional para hacer una primera prueba
 function updatePlotSVG(filename) {
-    mainWindow.webContents.send('load-svg', filename)
+    // mainWindow.webContents.send('load-svg', filename)
+    mainWindow.webContents.send('load-svg', "http://127.0.0.1:8080/")
+    
 }
 
 function showPythonCode(filename) {
@@ -108,12 +120,13 @@ function showError(message) {
 }
 
 function plot(params) {
+    // TODO: hacer que envíe info al servidor de python con lo que se quiere plotear
+    updatePlotSVG("http://127.0.0.1:8080/");
     runPythonScript(true, params)
         .then((data) => {
             if (data == 0) {
                 throw Error('Error: Invalid function');
             }
-            updatePlotSVG(data);
         })
         .catch((error) => {
             logger.log('error', error);
