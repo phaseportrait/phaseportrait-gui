@@ -35,7 +35,7 @@ function createMainWindow() {
     // Load the index page
     mainWindow.loadFile('index.html');
 
-    mainWindow.openDevTools()
+    // mainWindow.openDevTools()
 
     // Link handler
     mainWindow.webContents.setWindowOpenHandler(({url}) => {
@@ -62,12 +62,15 @@ function emptySVGDir() {
 }
 
 app.on('ready', () => {
-    try {
-        python_server_process = spawn('python',[`${__dirname}/phaseportrait-launcher.py`])
-    } catch (error) {
-        console.log(error);
-    }
-    
+
+    python_server_process = spawn('python',[`${__dirname}/phaseportrait-launcher.py`])
+    python_server_process.stdout.on('data', (data) => {
+        console.log(String(data));
+        if (phaseportrait_socket === null){
+            setupPPWebSocket()
+        };
+        
+    });
 
     emptySVGDir();
     createMainWindow();
@@ -111,6 +114,32 @@ function updatePlot() {
     
 }
 
+function get_websocket_type() {
+    if (typeof WebSocket !== 'undefined') {
+        return WebSocket;
+    } else if (typeof MozWebSocket !== 'undefined') {
+        return MozWebSocket;
+    } else {
+        alert(
+            'Your browser does not have WebSocket support. ' +
+                'Please try Chrome, Safari or Firefox ≥ 6. ' +
+                'Firefox 4 and 5 are also supported but you ' +
+                'have to enable WebSockets in about:config.'
+        );
+    }
+};
+
+function setupPPWebSocket(){
+    let web_socket_type = get_websocket_type();
+    phaseportrait_socket = new web_socket_type('ws://127.0.0.1:8080/pp');
+    // phaseportrait_socket.onerror = ...;
+    // phaseportrait_socket.onopen = ...;
+    // phaseportrait_socket.onmessage = ...;
+    phaseportrait_socket.onclose = function(){
+        setTimeout(setupPPWebSocket, 1000);
+    };
+}
+
 function showPythonCode(message) {
     mainWindow.webContents.send('show-code', message)
 }
@@ -122,16 +151,7 @@ function showError(message) {
 function plot(params) {
     // TODO: hacer que envíe info al servidor de python con lo que se quiere plotear
 
-    if (phaseportrait_socket === null){
-        phaseportrait_socket = new WebSocket('ws://127.0.0.1:8080', ['pp']);
-        phaseportrait_socket.onclose = function(event) {
-            console.log('Client notified socket has closed',event);
-        };
-    };
-    
-
-
-    params["type"] = '--plot'
+    params["phaseportrait_request"] = '--plot'
 
     phaseportrait_socket.send(JSON.stringify(params))
         // .then((data) => {
@@ -149,11 +169,12 @@ function plot(params) {
 }
 
 function generateCode(params) {
-    params["type"] = '--code'
+    params["phaseportrait_request"] = '--code'
 
-    phaseportrait_socket.onmessage = function(event, data) {
-        showPythonCode(data.join('\n'));
-    };
+    phaseportrait_socket.on('message', (event, data) => {
+        // TODO: arreglar
+        showPythonCode(String(data).join('\n'));
+    });
 
     phaseportrait_socket.send(JSON.stringify(params))
         // .then((data) => {

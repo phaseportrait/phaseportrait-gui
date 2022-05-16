@@ -7,8 +7,10 @@ except ImportError:
 import io
 import json
 import mimetypes
+import os
 from pathlib import Path
 from sys import argv
+import sys
 
 try:
     import tornado
@@ -175,14 +177,21 @@ class PhasePortraitServer(tornado.web.Application):
     # TODO: este debería ser el websocket que relaciona electron con python      
     class PPSocket(tornado.websocket.WebSocketHandler):
         def open(self):
-            print("open")
+            # manager = self.application.manager
+            # manager.add_web_socket(self)
+
+            if hasattr(self, 'set_nodelay'):
+                self.set_nodelay(True)
 
         def on_close(self):
-            print("close")
+            # manager = self.application.manager
+            # manager.remove_web_socket(self)
+            pass
+
 
         def on_message(self, message):
             message = json.loads(message)
-            result = self.application.phaseportriat.manager.handle_json(message)
+            result = self.application.phaseportrait.manager.handle_json(message)
             self.write_message(str(result))
             
 
@@ -217,7 +226,7 @@ class PhasePortraitServer(tornado.web.Application):
             (r'/download.([a-z0-9.]+)', self.Download),
             
             # TODO: este es el nuestro, para nosotros. Creo que se hace así
-            (r'/pp', self.PPSocket),
+            ('/pp', self.PPSocket)
         ])
 
 if __name__ == '__main__':
@@ -228,15 +237,8 @@ if __name__ == '__main__':
     # }
     # result = modes[argv[1]](argv[2])
     
-   
-    
-    with open("log_py.txt", 'w') as file:
-        try:
-            application = PhasePortraitServer()
-            http_server = tornado.httpserver.HTTPServer(application)
-            http_server.listen(8080)
-
-            print("http://localhost:8080/")
-            tornado.ioloop.IOLoop.current().start()
-        except Exception as e:
-            file.write(e)
+    application = PhasePortraitServer()
+    http_server = tornado.httpserver.HTTPServer(application)
+    http_server.listen(8080)
+    print("localhost:8080", flush=True, end='')
+    tornado.ioloop.IOLoop.current().start()
