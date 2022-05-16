@@ -2,6 +2,7 @@ try:
     from phaseportrait import PhasePortrait2DManager
 except ImportError:
     from phaseportrait_local.phaseportrait import PhasePortrait2DManager
+    from phaseportrait_local.phaseportrait import PhasePortrait2D
 
 import io
 import json
@@ -21,7 +22,6 @@ import tornado.web
 import tornado.websocket
 from matplotlib.backends.backend_webagg_core import (
     FigureManagerWebAgg, new_figure_manager_given_figure)
-from matplotlib.figure import Figure
 
 # This html is used in the tornado local server with the figure
 html_content = """
@@ -78,7 +78,7 @@ html_content = """
 """
 
 
-class MyApplication(tornado.web.Application):
+class PhasePortraitServer(tornado.web.Application):
     class MainPage(tornado.web.RequestHandler):
         """
         Serves the main HTML page.
@@ -170,10 +170,28 @@ class MyApplication(tornado.web.Application):
                 data_uri = "data:image/png;base64,{0}".format(
                     blob.encode('base64').replace('\n', ''))
                 self.write_message(data_uri)
+                
+          
+    # TODO: este debería ser el websocket que relaciona electron con python      
+    class PPSocket(tornado.websocket.WebSocketHandler):
+        def open(self):
+            print("open")
 
-    def __init__(self, figure):
-        self.figure = figure
-        self.manager = new_figure_manager_given_figure(id(figure), figure)
+        def on_close(self):
+            print("close")
+
+        def on_message(self, message):
+            message = json.loads(message)
+            result = self.application.phaseportriat.manager.handle_json(message)
+            self.write_message(str(result))
+            
+
+    def __init__(self):
+        self.phaseportrait = PhasePortrait2D(lambda x,y: (y,-x), [[0,1], [0,1]])
+        self.phaseportrait.plot()
+        
+        self.figure = self.phaseportrait.fig
+        self.manager = new_figure_manager_given_figure(id(self.figure), self.figure)
 
         super().__init__([
             # Static files for the CSS and JS
@@ -197,24 +215,28 @@ class MyApplication(tornado.web.Application):
 
             # Handles the downloading (i.e., saving) of static images
             (r'/download.([a-z0-9.]+)', self.Download),
+            
+            # TODO: este es el nuestro, para nosotros. Creo que se hace así
+            (r'/pp', self.PPSocket),
         ])
 
 if __name__ == '__main__':
-    # try:
-    #     tornado.ioloop.IOLoop.current().stop()
-    # except Exception as e:
-    #     print(e)
-    
-    modes = {
-        '--code' : PhasePortrait2DManager.json_to_python_code,
-        '--plot' : PhasePortrait2DManager.plot_from_json
-    }
-    result = modes[argv[1]](argv[2])
-    
-    application = MyApplication(result)
 
-    http_server = tornado.httpserver.HTTPServer(application)
-    http_server.listen(8080)
+    # modes = {
+    #     '--code' : PhasePortrait2DManager.json_to_python_code,
+    #     '--plot' : PhasePortrait2DManager.plot_from_json
+    # }
+    # result = modes[argv[1]](argv[2])
+    
+   
+    
+    with open("log_py.txt", 'w') as file:
+        try:
+            application = PhasePortraitServer()
+            http_server = tornado.httpserver.HTTPServer(application)
+            http_server.listen(8080)
 
-    print("http://127.0.0.1:8080/")
-    tornado.ioloop.IOLoop.current().start()
+            print("http://localhost:8080/")
+            tornado.ioloop.IOLoop.current().start()
+        except Exception as e:
+            file.write(e)

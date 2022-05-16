@@ -34,7 +34,7 @@ window.onload = () => {
     });
 }
 
-electron.ipcRenderer.on("load-svg", (event, filename) => {
+electron.ipcRenderer.on("load-plot", (event, filename) => {
     if (!plot_visible) {
         document.getElementById("code_div").style.display = 'none';
         plot_visible = !plot_visible;
