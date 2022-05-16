@@ -135,6 +135,7 @@ class PhasePortraitServer(tornado.web.Application):
               to the browser.
         """
         supports_binary = True
+        _prev_ = True
 
         def open(self):
             # Register the websocket with the FigureManager.
@@ -160,6 +161,16 @@ class PhasePortraitServer(tornado.web.Application):
                 self.supports_binary = message['value']
             else:
                 manager = self.application.manager
+                if message['type'] == 'button_release' or \
+                    (self._prev_ == 'home'):
+                    ax = self.application.phaseportrait.ax
+                    x_lim = ax.get_xlim()
+                    y_lim = ax.get_ylim()
+                    ax.cla()
+                    self.application.phaseportrait.Range = [x_lim, y_lim]
+                    self.application.phaseportrait.plot()
+                
+                self._prev_ = message.get('name', None)
                 manager.handle_json(message)
 
         def send_json(self, content):
