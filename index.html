@@ -108,6 +108,10 @@
                             <label class="label">max</label>
                             <input id="x_max" type="number" placeholder="1" class="input">
                         </div>
+                        <div>
+                            <label class="label">scale</label>
+                            <input id="xScale" type="text" placeholder="" class="input">
+                        </div>
 
                     </div>
                     <div class="field w-full flex gap-2 items-center">
@@ -117,6 +121,9 @@
                         </div>
                         <div>
                             <input id="y_max" type="number" placeholder="1" class="input">
+                        </div>
+                        <div>
+                            <input id="yScale" type="text" placeholder="" class="input">
                         </div>
 
                     </div>
@@ -160,8 +167,10 @@
 
                 <!-- color -->
                 <div class="field w-full">
+                    <!-- TODO: mejorar la presentación de esta parte -->
                     <div class="flex justify-between items-center">
                         <label for="color" class="label">Color</label>
+
                         <a target="_blank" class="dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400"
                            href="https://matplotlib.org/stable/tutorials/colors/colormaps.html">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mt-[-0.5rem]" fill="none"
@@ -171,6 +180,20 @@
                                       d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                             </svg>
                         </a>
+
+                        <input class="
+                            h-4 w-4
+                            m-0 mr-1
+                            border border-gray-300 rounded-sm bg-white
+                            checked:bg-blue-600 checked:border-blue-600
+                            focus:outline-none
+                            transition duration-200 align-top
+                            bg-no-repeat bg-center bg-contain float-left
+                            cursor-pointer"
+                            type="checkbox" id="Colorbar">
+                        <label class="inline-block text-gray-800 dark:text-white text-sm select-none" for="Colorbar">
+                            Colorbar
+                    </label>
                     </div>
                     <input id="color" type="text" placeholder="viridis" class="input">
                 </div>
@@ -287,6 +310,18 @@
                 </div>
 
                 <button onclick="toggleFullScreenMode()" class="zoom-button m-[-0.5rem]">
+                    <svg class="h-6 w-6 inline-block" width="24" height="24" viewBox="0 0 24 24" stroke-width="2"
+                         stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                        <path stroke="none" d="M0 0h24v24H0z"/>
+                        <path d="M4 8v-2a2 2 0 0 1 2 -2h2"/>
+                        <path d="M4 16v2a2 2 0 0 0 2 2h2"/>
+                        <path d="M16 4h2a2 2 0 0 1 2 2v2"/>
+                        <path d="M16 20h2a2 2 0 0 0 2 -2v-2"/>
+                    </svg>
+                </button>
+
+                <!-- TODO: ponerlo en un lugar decente por favor -->
+                <button onclick="enableInteractiveDisplay()" class="zoom-button m-[-4.5rem]">
                     <svg class="h-6 w-6 inline-block" width="24" height="24" viewBox="0 0 24 24" stroke-width="2"
                          stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
                         <path stroke="none" d="M0 0h24v24H0z"/>

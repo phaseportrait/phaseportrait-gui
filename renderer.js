@@ -14,6 +14,8 @@ let dF_args = {};
 let dF_args_length = 0;
 
 let plot_visible = true;
+let plot_interactive = false;
+let prev_plot_filename = 'default.svg';
 let alertId = 0;
 
 window.onload = () => {
@@ -160,8 +162,17 @@ function update_params() {
     Density = Number(document.getElementById('Density').value);
     if (Density) params['Density'] = Density;
 
-    Polar = Boolean(document.getElementById('Polar').checked)
-    if (Polar) params['Polar'] = Polar
+    Polar = Boolean(document.getElementById('Polar').checked);
+    if (Polar) params['Polar'] = Polar;
+
+    xScale = document.getElementById('xScale').value;
+    if (xScale) params['xScale'] = xScale;
+
+    yScale = document.getElementById('yScale').value;
+    if (yScale) params['yScale'] = yScale;
+
+    Colorbar = Boolean(document.getElementById('Colorbar').value);
+    if (Colorbar) params['Colorbar'] = Colorbar;
 
     Title = document.getElementById('Title').value;
     if (Title) params['Title'] = Title;
@@ -245,6 +256,12 @@ function exit_code_display() {
         document.getElementById("code_div").style.display = 'none';
         plot_visible = !plot_visible;
     }
+}
+
+function enableInteractiveDisplay() {
+    plot_interactive = !plot_interactive;
+    document.getElementById("img").src = plot_interactive? 
+        `${__dirname}/svg/figure.html` : `${__dirname}/svg/${prev_plot_filename}`;    
 }
 
 function addAlert(message) {

@@ -7,10 +7,8 @@ except ImportError:
 import io
 import json
 import mimetypes
-import os
 from pathlib import Path
-from sys import argv
-import sys
+
 
 try:
     import tornado

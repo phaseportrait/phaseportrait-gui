@@ -38,7 +38,7 @@ class Manager:
                                     [range['y_min'],range['y_max']]]
         
         # Parameters
-        kargs = ['MeshDim', 'dF_args', 'Density', 'Polar', 'Title', 'xlabel', 'ylabel', 'color']
+        kargs = ['MeshDim', 'dF_args', 'Density', 'Polar', 'Title', 'xScale',  'yScale', 'xlabel', 'ylabel', 'color']
         for k,v in configuration.items():
             if k in kargs:
                 setattr(self.portrait, k, v)

@@ -33,7 +33,7 @@ class PhasePortrait2D:
         Returns the axis and the figure.
     """
     _name_ = 'PhasePortrait2D'
-    def __init__(self, dF, Range, *, MeshDim=30, dF_args={}, Density = 1, Polar = False, Title = 'Phase Portrait', xlabel = 'X', ylabel = r"$\dot{X}$", color='rainbow'):
+    def __init__(self, dF, Range, *, MeshDim=30, dF_args={}, Density = 1, Polar = False, Title = 'Phase Portrait', xlabel = 'X', ylabel = r"$\dot{X}$", color='rainbow', xScale='linear', yScale='linear'):
         """
         PhasePortrait2D
         ---------------
@@ -62,6 +62,10 @@ class PhasePortrait2D:
             y label of the plot.
         color : str, default='rainbow'
             Matplotlib `Cmap`.
+        xScale : str, default='linear'
+            x axis scale. Can be `linear`, `log`, `symlog`, `logit`.
+        yScale : str, default='linear'
+            y axis scale. Can be `linear`, `log`, `symlog`, `logit`.
         """
         self.dF_args = dF_args.copy()                    # dF function's args
         self.dF = dF                                     # Function containing system's equations
@@ -69,11 +73,14 @@ class PhasePortrait2D:
         
 
         self.MeshDim  = MeshDim
-        self.Density = Density                                           # Controls concentration of nearby trajectories
-        self.Polar = Polar                                               # If dF expression given in polar coord. mark as True
-        self.Title = Title                                               # Title of the plot
-        self.xlabel = xlabel                                             # Title on X axis
-        self.ylabel = ylabel                                             # Title on Y axis
+        self.Density = Density                           # Controls concentration of nearby trajectories
+        self.Polar = Polar                               # If dF expression given in polar coord. mark as True
+        self.Title = Title                               # Title of the plot
+        self.xlabel = xlabel                             # Title on X axis
+        self.ylabel = ylabel                             # Title on Y axis
+
+        self.xScale = xScale                             # x axis scale
+        self.yScale = yScale                             # x axis scale 
 
         self._create_arrays()
 
@@ -163,7 +170,9 @@ class PhasePortrait2D:
         self.ax.set_title(f'{self.Title}')
         self.ax.set_xlabel(f'{self.xlabel}')
         self.ax.set_ylabel(f'{self.ylabel}')
-        self.ax.grid()
+        self.ax.set_xscale(self.xScale)
+        self.ax.set_yscale(self.yScale)
+        self.ax.grid(True)
         
         return stream
 
