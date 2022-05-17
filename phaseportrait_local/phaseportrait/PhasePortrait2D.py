@@ -95,6 +95,15 @@ class PhasePortrait2D:
 
 
     def _create_arrays(self):
+        # If scale is log and min range value is 0 or negative the plots is not correct
+        _Range = self.Range.copy()
+        for i, (scale, Range) in enumerate(zip([self.xScale, self.yScale], self.Range)):
+            if scale == 'log':
+                for j in range(len(Range)):
+                    if Range[j]<=0:
+                        _Range[i,j] = abs(max(Range))/100 if j==0 else abs(max(Range))
+        self.Range = _Range
+
         self._X, self._Y = np.meshgrid(np.linspace(*self.Range[0,:], self.MeshDim), np.linspace(*self.Range[1,:], self.MeshDim))
 
         if self.Polar:   
@@ -164,9 +173,8 @@ class PhasePortrait2D:
         stream = self.ax.streamplot(self._X, self._Y, self._dX, self._dY, color=colors, cmap=self.color, norm=colors_norm, linewidth=1, density= self.Density)
         self.ax.set_xlim(self.Range[0,:])
         self.ax.set_ylim(self.Range[1,:])
-        x0,x1 = self.ax.get_xlim()
-        y0,y1 = self.ax.get_ylim()
-        self.ax.set_aspect(abs(x1-x0)/abs(y1-y0))
+        self.ax.set_aspect(abs(self.Range[0,1]-self.Range[0,0])/abs(self.Range[1,1]-self.Range[1,0]))
+
         self.ax.set_title(f'{self.Title}')
         self.ax.set_xlabel(f'{self.xlabel}')
         self.ax.set_ylabel(f'{self.ylabel}')
