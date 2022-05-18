@@ -5,6 +5,7 @@ except ImportError:
     from phaseportrait_local.phaseportrait import PhasePortrait2D
 
 import io
+import os
 import json
 import mimetypes
 from pathlib import Path
@@ -24,58 +25,62 @@ from matplotlib.backends.backend_webagg_core import (
     FigureManagerWebAgg, new_figure_manager_given_figure)
 
 # This html is used in the tornado local server with the figure
-html_content = """
-<html>
-  <head>
-    <link rel="stylesheet" href="_static/css/page.css" type="text/css">
-    <link rel="stylesheet" href="_static/css/boilerplate.css"
-          type="text/css" />
-    <link rel="stylesheet" href="_static/css/fbm.css" type="text/css" />
-    <link rel="stylesheet" href="_static/css/mpl.css" type="text/css">
-    <script src="mpl.js"></script>
-    <script>
-      /* This is a callback that is called when the user saves
-         (downloads) a file.  Its purpose is really to map from a
-         figure and file format to a url in the application. */
-      function ondownload(figure, format) {
-        window.open('download.' + format, '_blank');
-      };
-      function ready(fn) {
-        if (document.readyState != "loading") {
-          fn();
-        } else {
-          document.addEventListener("DOMContentLoaded", fn);
-        }
-      }
-      ready(
-        function() {
-          /* It is up to the application to provide a websocket that the figure
-             will use to communicate to the server.  This websocket object can
-             also be a "fake" websocket that underneath multiplexes messages
-             from multiple figures, if necessary. */
-          var websocket_type = mpl.get_websocket_type();
-          var websocket = new websocket_type("%(ws_uri)sws");
-          // mpl.figure creates a new figure on the webpage.
-          var fig = new mpl.figure(
-              // A unique numeric identifier for the figure
-              %(fig_id)s,
-              // A websocket object (or something that behaves like one)
-              websocket,
-              // A function called when a file type is selected for download
-              ondownload,
-              // The HTML element in which to place the figure
-              document.getElementById("figure"));
-        }
-      );
-    </script>
-    <title>matplotlib</title>
-  </head>
-  <body>
-    <div id="figure">
-    </div>
-  </body>
-</html>
-"""
+
+files_path = '/'.join(__file__.split('\\')[:-1])
+
+# html_content = f"""
+# <html>
+#   <head>
+#     <link rel="stylesheet" href="{files_path}/web_backend/css/page.css" type="text/css">
+#     <link rel="stylesheet" href="{files_path}/web_backend/css/boilerplate.css"
+#           type="text/css" />
+#     <link rel="stylesheet" href="{files_path}/web_backend/css/fbm.css" type="text/css" />
+#     <link rel="stylesheet" href="{files_path}/web_backend/css/mpl.css" type="text/css">
+#     <script src="{files_path}/web_backend/js/mpl.js"></script>
+#     <script>"""
+# html_content += """
+#       /* This is a callback that is called when the user saves
+#          (downloads) a file.  Its purpose is really to map from a
+#          figure and file format to a url in the application. */
+#       function ondownload(figure, format) {
+#         window.open('download.' + format, '_blank');
+#       };
+#       function ready(fn) {
+#         if (document.readyState != "loading") {
+#           fn();
+#         } else {
+#           document.addEventListener("DOMContentLoaded", fn);
+#         }
+#       }
+#       ready(
+#         function() {
+#           /* It is up to the application to provide a websocket that the figure
+#              will use to communicate to the server.  This websocket object can
+#              also be a "fake" websocket that underneath multiplexes messages
+#              from multiple figures, if necessary. */
+#           var websocket_type = mpl.get_websocket_type();
+#           var websocket = new websocket_type("%(ws_uri)sws");
+#           // mpl.figure creates a new figure on the webpage.
+#           var fig = new mpl.figure(
+#               // A unique numeric identifier for the figure
+#               %(fig_id)s,
+#               // A websocket object (or something that behaves like one)
+#               websocket,
+#               // A function called when a file type is selected for download
+#               ondownload,
+#               // The HTML element in which to place the figure
+#               document.getElementById("figure"));
+#         }
+#       );
+#     </script>
+#     <title>PhasePortrait</title>
+#   </head>
+#   <body>
+#     <div id="figure">
+#     </div>
+#   </body>
+# </html>
+# """
 
 
 class PhasePortraitServer(tornado.web.Application):
@@ -86,9 +91,12 @@ class PhasePortraitServer(tornado.web.Application):
 
         def get(self):
             manager = self.application.manager
+            html_content = open(os.path.join(os.path.dirname(__file__), 'plot.html'), 'r').read()
             ws_uri = "ws://{req.host}/".format(req=self.request)
-            content = html_content % {
-                "ws_uri": ws_uri, "fig_id": manager.num}
+            content = html_content \
+                .replace('%(files_path)', files_path) \
+                .replace('%(ws_uri)', ws_uri) \
+                .replace('%(fig_id)', str(manager.num))
             self.write(content)
 
     class MplJs(tornado.web.RequestHandler):
@@ -101,9 +109,9 @@ class PhasePortraitServer(tornado.web.Application):
 
         def get(self):
             self.set_header('Content-Type', 'application/javascript')
-            js_content = FigureManagerWebAgg.get_javascript()
-
+            js_content = open(os.path.join(os.path.dirname(__file__), 'web_backend\\js\\mpl.js'), 'r').read()
             self.write(js_content)
+            
 
     class Download(tornado.web.RequestHandler):
         """
@@ -133,7 +141,7 @@ class PhasePortraitServer(tornado.web.Application):
               to the browser.
         """
         supports_binary = True
-        _prev_ = True
+        _prev_ = None
 
         def open(self):
             # Register the websocket with the FigureManager.
@@ -215,7 +223,8 @@ class PhasePortraitServer(tornado.web.Application):
             # Static files for the CSS and JS
             (r'/_static/(.*)',
              tornado.web.StaticFileHandler,
-             {'path': FigureManagerWebAgg.get_static_file_path()}),
+            #  {'path': FigureManagerWebAgg.get_static_file_path()}),
+            {'path': os.path.join(os.path.dirname(__file__), 'web_backend')}),
 
             # Static images for the toolbar
             (r'/_images/(.*)',
