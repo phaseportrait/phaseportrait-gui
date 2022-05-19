@@ -18,20 +18,6 @@ class Manager:
         # TODO:
             _description_
         """
-        
-        if new_dF := configuration.get('dF'):
-            try:
-                match = re.search(r"def\s+(\w+)\(", new_dF)
-                function_name = match.group(1)
-                # match = re.search(r"(\s+)def", new_dF)
-                # if match is not None:
-                #     new_dF = new_dF.replace(match.group(0), "\ndef")
-                # del match
-
-                exec(new_dF, globals())
-                self.portrait.dF = globals()[function_name]
-            except  Exception as e:
-                return 0
 
         if range := configuration.get('Range'):
             self.portrait.Range = [[range['x_min'],range['x_max']],
@@ -45,6 +31,36 @@ class Manager:
                 
         if nc:=configuration.get('nullcline'):
             self.portrait.add_nullclines(**nc)
+            
+        if sls:=configuration.get('sliders'):
+            for sl_name in sls:
+                # If a slider is already created with same name ends are updated and value is changed
+                if slider:=self.portrait.sliders.get(sl_name):
+                        slider.update_slider_ends(sls[sl_name]["min"], sls[sl_name]["max"])
+                        slider.value = configuration["dF_args"][sl_name]
+                        slider.slider.set_value(configuration["dF_args"][sl_name])
+                
+                else:
+                    self.portrait.add_slider(sl_name, 
+                        valinit=configuration["dF_args"][sl_name],
+                        valinterval=[sls[sl_name]["min"], sls[sl_name]["max"]],
+                        valstep= (sls[sl_name]["max"]-sls[sl_name]["min"])/50
+                        )
+                    
+                    
+        if new_dF := configuration.get('dF'):
+            try:
+                match = re.search(r"def\s+(\w+)\(", new_dF)
+                function_name = match.group(1)
+                # match = re.search(r"(\s+)def", new_dF)
+                # if match is not None:
+                #     new_dF = new_dF.replace(match.group(0), "\ndef")
+                # del match
+
+                exec(new_dF, globals())
+                self.portrait.dF = globals()[function_name]
+            except  Exception as e:
+                return 1
         
         # Clean axis and replot
         try:
@@ -111,32 +127,10 @@ class Manager:
 
         return header +"\n\t\n"+ function +"\n\t\n"+ portrait +"\n"+ portrait_kargs +"\n\t\n"+ nullcline +"\n\t\n"+ finisher
         
-    
-    def scale_change(self, configuration):
-        if xScale := configuration.get("xScale"):
-            try:
-                self.portrait.ax.set_xscale(xScale)
-            except ValueError as e:
-                pass
-            
-        if yScale := configuration.get("yScale"):
-            try:
-                self.portrait.ax.set_yscale(yScale)
-            except ValueError as e:
-                pass
-        # TODO: quizá hay que actualizar el plot de alguna manera
         
     def handle_json(self, message):
-        # TODO: Primero debería de mirar si hay que devolver código o plotear
-        
-        # with open("log_py.txt", 'a') as file:
-        #     file.write(message)
-
         if message["phaseportrait_request"] == '--plot':
             return self.plot_update(message)
         
         if message["phaseportrait_request"] == '--code':
             return self.equivalent_code(message)
-            
-        if message["phaseportrait_request"] == '--scale_change':
-            return self.scale_change(message)

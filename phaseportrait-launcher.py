@@ -209,15 +209,22 @@ class PhasePortraitServer(tornado.web.Application):
         def on_message(self, message):
             message = json.loads(message)
             result = self.application.phaseportrait.manager.handle_json(message)
+            if result == 1:
+                self.application.start_phaseportrait(message=message)
             self.write_message(str(result))
             
 
-    def __init__(self):
+    def start_phaseportrait(self, *, message=None):
         self.phaseportrait = PhasePortrait2D(lambda x,y: (y,-x), [[0,1], [0,1]])
         self.phaseportrait.plot()
         
         self.figure = self.phaseportrait.fig
         self.manager = new_figure_manager_given_figure(id(self.figure), self.figure)
+        if message is not None:
+            result = self.application.phaseportrait.manager.handle_json(message)
+
+    def __init__(self):
+        self.start_phaseportrait()
 
         super().__init__([
             # Static files for the CSS and JS

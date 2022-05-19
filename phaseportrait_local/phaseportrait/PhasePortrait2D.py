@@ -67,6 +67,9 @@ class PhasePortrait2D:
         yScale : str, default='linear'
             y axis scale. Can be `linear`, `log`, `symlog`, `logit`.
         """
+        self.sliders = {}
+        self.nullclines = []
+        
         self.dF_args = dF_args.copy()                    # dF function's args
         self.dF = dF                                     # Function containing system's equations
         self.Range = Range                               # Range of graphical representation
@@ -87,12 +90,9 @@ class PhasePortrait2D:
         # Variables for plotting
         self.fig, self.ax = plt.subplots()
         self.color = color
-        self.sliders = {}
-        self.nullclines = []
         
         self.manager = manager.Manager(self)
-
-
+  
 
     def _create_arrays(self):
         # If scale is log and min range value is 0 or negative the plots is not correct
@@ -239,6 +239,12 @@ class PhasePortrait2D:
         sig = signature(func)
         if len(sig.parameters)<2 + len(self.dF_args):
             raise exceptions.dFInvalid(sig, self.dF_args)
+        
+        # TODO: when a slider is created it should create and append an axis to the figure. For easier cleaning
+        for s in self.sliders.copy():
+            if s not in sig.parameters:
+                raise exceptions.dF_argsInvalid(self.dF_args)
+
         self._dF = func
 
     @property
