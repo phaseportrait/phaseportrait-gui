@@ -7,10 +7,11 @@ const cm = require('codemirror');
 
 let editor;
 let code_display;
-const defaultFunction = 'def a(x, y, *, w=0):\n\treturn y, -x';
+const defaultFunction = 'def a(x, y, *, w=-1):\n\treturn w*y, x';
 
 let params = {};
 let dF_args = {};
+let sliders = {};
 let dF_args_length = 0;
 
 let plot_visible = true;
@@ -39,9 +40,10 @@ electron.ipcRenderer.on("load-plot", (event, filename) => {
         document.getElementById("code_div").style.display = 'none';
         plot_visible = !plot_visible;
     }
+    let img = document.getElementById("img")
     // document.getElementById("img").src = `${__dirname}/svg/${filename}`;
-    document.getElementById("img").src = filename;
-    document.getElementById("img").style.display = 'flex';
+    img.src = filename;
+    img.style.display = 'flex';
     setLoadingState(false);
 });
 
@@ -62,7 +64,7 @@ electron.ipcRenderer.on("show-error", (event, message) => {
 });
 
 
-function add_dFarg(param_name, placeholder) {
+function add_dFarg(param_name, placeholder, min, max) {
     if (dF_args_length == 0) {
         document.getElementById('dF_args_div').style.display = null;
     }
@@ -75,14 +77,33 @@ function add_dFarg(param_name, placeholder) {
     param_div_name.innerHTML = param_name;
     param_div.append(param_div_name);
 
+    let param_slider_min = document.createElement('input');
+    param_slider_min.id = `${param_name}_slider_min`;
+    param_slider_min.type = "number";
+    param_slider_min.placeholder = String(min);
+    param_slider_min.className = "appearance-none block w-full bg-gray-200 dark:bg-[#263238] text-gray-700 " +
+        "border border-gray-200 dark:border-gray-500 rounded py-3 px-4 mb-3 dark:text-gray-100 leading-tight " +
+        "focus:outline-none focus:bg-white focus:border-gray-500";
+    param_div.append(param_slider_min);
+
     let param_input = document.createElement('input');
     param_input.id = `${param_name}_value`;
     param_input.type = "number";
     param_input.value = String(placeholder);
+    param_input.placeholder = String(placeholder);
     param_input.className = "appearance-none block w-full bg-gray-200 dark:bg-[#263238] text-gray-700 " +
         "border border-gray-200 dark:border-gray-500 rounded py-3 px-4 mb-3 dark:text-gray-100 leading-tight " +
         "focus:outline-none focus:bg-white focus:border-gray-500";
     param_div.append(param_input);
+
+    let param_slider_max = document.createElement('input');
+    param_slider_max.id = `${param_name}_slider_max`;
+    param_slider_max.type = "number";
+    param_slider_max.placeholder = String(max);
+    param_slider_max.className = "appearance-none block w-full bg-gray-200 dark:bg-[#263238] text-gray-700 " +
+        "border border-gray-200 dark:border-gray-500 rounded py-3 px-4 mb-3 dark:text-gray-100 leading-tight " +
+        "focus:outline-none focus:bg-white focus:border-gray-500";
+    param_div.append(param_slider_max);
 
     document.getElementById('dF_args_container').append(param_div);
 }
@@ -93,28 +114,32 @@ function remove_dFarg(param_name) {
 
 function update_dF_args(functionValue) {
     const dF_args_new = {};
+    const sliders_new = {};
     const dF_args_regex = /(?<=\*\s*,)[^\\)]*/;
 
     if (!dF_args_regex.test(functionValue)) return;
 
     const dF_args_match = functionValue.match(dF_args_regex);
     if (dF_args_match) {
-        const arguments = dF_args_match[0].replace(/\s+/g, '').split(',')
+        const arguments = dF_args_match[0].replace(/\s+/g, '').split(',');
         arguments.forEach(parameter => {
             if (!parameter) return;
             if (parameter.match(/=/)) {
-                const parameter_splited = parameter.split(/=/)
-                dF_args_new[parameter_splited[0]] = Number(parameter_splited[1])
+                const parameter_splited = parameter.split(/=/);
+                dF_args_new[parameter_splited[0]] = Number(parameter_splited[1]);
             } else {
-                dF_args_new[parameter] = 0
+                dF_args_new[parameter] = 0;
             }
         });
     }
     Object.keys(dF_args_new).forEach(function (key) {
         if (key in dF_args) {
-            dF_args_new[key] = Number(document.getElementById(`${key}_value`).value)
+            dF_args_new[key] = Number(document.getElementById(`${key}_value`).value);
+            sliders_new[key] = {};
+            sliders_new[key]["min"] = document.getElementById(`${key}_slider_min`).value ? Number(document.getElementById(`${key}_slider_min`).value) : dF_args_new[key]-1;
+            sliders_new[key]["max"] = document.getElementById(`${key}_slider_max`).value ? Number(document.getElementById(`${key}_slider_max`).value) : dF_args_new[key]+1;
         } else {
-            add_dFarg(key, dF_args[key]);
+            add_dFarg(key, dF_args_new[key], dF_args_new[key]-1, dF_args_new[key]+1);
             dF_args_length += 1;
         }
     });
@@ -129,6 +154,7 @@ function update_dF_args(functionValue) {
     }
 
     dF_args = dF_args_new;
+    sliders = sliders_new;
 }
 
 function update_params() {
@@ -139,7 +165,9 @@ function update_params() {
 
     // dF_args_new
     update_dF_args(params['dF']);
+
     params['dF_args'] = dF_args;
+    params['sliders'] = sliders;
 
     // Range
     x_min = document.getElementById('x_min').value ? Number(document.getElementById('x_min').value) : 0;
