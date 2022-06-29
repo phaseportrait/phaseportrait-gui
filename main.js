@@ -7,7 +7,8 @@ const fs = require('fs');
 
 const WebSocket = require('ws');
 
-let {PythonShell} = require('python-shell')
+let {PythonShell} = require('python-shell');
+const { log } = require('console');
 
 const logger = new console.Console(fs.createWriteStream(`${__dirname}/log.txt`));
 const python_options = fs.createReadStream(`${__dirname}/python_settings.json`)
@@ -69,6 +70,7 @@ app.on('ready', () => {
         if (phaseportrait_socket === null){
             setupPPWebSocket()
         };
+        updatePlot()
         
     });
     // setupPPWebSocket()
@@ -106,9 +108,6 @@ app.on('window-all-closed', () => {
     }
   })
 
-
-
-// TODO: cambio provisional para hacer una primera prueba
 function updatePlot() {
     // mainWindow.webContents.send('load-plot', filename)
     mainWindow.webContents.send('load-plot', "http://127.0.0.1:8080/")
@@ -139,50 +138,38 @@ function setupPPWebSocket(){
     phaseportrait_socket.onclose = function(){
         setTimeout(setupPPWebSocket, 1000);
     };
+    phaseportrait_socket.on("error", (err) => {
+        logger.log('error', error);
+        showError(err);
+    });
 }
 
 function showPythonCode(message) {
-    mainWindow.webContents.send('show-code', message)
+    mainWindow.webContents.send('show-code', message);
 }
 
 function showError(message) {
-    mainWindow.webContents.send('show-error', message)
+    mainWindow.webContents.send('show-error', message);
 }
 
-function plot(params) {
-    // TODO: hacer que envíe info al servidor de python con lo que se quiere plotear
-
-    params["phaseportrait_request"] = '--plot'
-
-    phaseportrait_socket.send(JSON.stringify(params))
-        // .then((data) => {
-            
-        //     if (data == 0) {
-        //         throw Error('Error: Invalid function');
-        //     }
-            
-        // })
-        // .catch((error) => {
-        //     logger.log('error', error);
-        //     showError(error);
-        // });
-    updatePlot();
+function sendParamsToPython(plot = true, plotParams = []) {
+    plotParams["phaseportrait_request"] = plot ? '--plot' : '--code';
+    plotParams["phaseportrait_object_type"] = "PhasePortrait2D"
+    phaseportrait_socket.send(JSON.stringify(plotParams))
 }
 
-function generateCode(params) {
-    params["phaseportrait_request"] = '--code'
-
-    phaseportrait_socket.on('message', (event, data) => {
-        // TODO: arreglar
-        showPythonCode(String(data).join('\n'));
+function plot(plotParams) {
+    phaseportrait_socket.removeAllListeners("message");
+    phaseportrait_socket.on("message", (data) => {
+        updatePlot();
     });
+    sendParamsToPython(true, plotParams);
+}
 
-    phaseportrait_socket.send(JSON.stringify(params))
-        // .then((data) => {
-        //     showPythonCode(data.join('\n'))
-        // })
-        // .catch((error) => {
-        //     logger.log('error', error);
-        //     showError(error);
-        // }); 
+function generateCode(codeParams) {
+    phaseportrait_socket.removeAllListeners("message");
+    phaseportrait_socket.on("message", (data) => {
+        showPythonCode(data.toString());
+    });
+    sendParamsToPython(false, codeParams);
 }

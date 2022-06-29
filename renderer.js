@@ -10,6 +10,7 @@ let code_display;
 const defaultFunction = 'def a(x, y, *, w=-1):\n\treturn w*y, x';
 
 let params = {};
+let prev_params = {};
 let dF_args = {};
 let sliders = {};
 let dF_args_length = 0;
@@ -24,6 +25,8 @@ window.onload = () => {
         lineNumbers: true,
         placeholder: defaultFunction,
     });
+    editor.on("drop", (editor, e) => {return false;});
+
     code_display = cm.fromTextArea(document.getElementById('codemirror-container-code-display'), {
         mode: 'python',
         theme: 'material',
@@ -32,6 +35,32 @@ window.onload = () => {
 
     editor.on('change', e => {
         update_dF_args(e.getValue());
+    });
+
+    let parameters_div = document.getElementById('parameters_div');
+    document.addEventListener('drop', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        let _file = e.dataTransfer.files[0];
+
+        if (_file.type === "application/json"){
+            // loadJSON(_file.path, (data)=>{dF_args=data[0];});  
+            data = require(_file.path);
+            set_params(data);
+            plot(data);
+        };
+        return false;
+    });
+    document.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setLoadingState(true);
+    });
+    document.addEventListener('dragenter', (event) => {
+        setLoadingState(true);
+    });
+    document.addEventListener('dragleave', (event) => {
+        setLoadingState(false);
     });
 }
 
@@ -117,7 +146,21 @@ function update_dF_args(functionValue) {
     const sliders_new = {};
     const dF_args_regex = /(?<=\*\s*,)[^\\)]*/;
 
-    if (!dF_args_regex.test(functionValue)) return;
+    if (!dF_args_regex.test(functionValue)) {
+        Object.keys(dF_args).forEach(function (key) {
+            if (!(key in dF_args_new)) {
+                remove_dFarg(key);
+                dF_args_length -= 1;
+            }
+        });
+        if (dF_args_length === 0) {
+            document.getElementById('dF_args_div').style.display = 'none'
+        }
+    
+        dF_args = dF_args_new;
+        sliders = sliders_new;
+        return;
+    }
 
     const dF_args_match = functionValue.match(dF_args_regex);
     if (dF_args_match) {
@@ -162,6 +205,10 @@ function update_params() {
 
     // dF
     params['dF'] = !!editor.getValue() ? editor.getValue() : defaultFunction;
+
+    // if (params['dF'] === prev_params?['dF']:''){
+    //     params = {};
+    // }
 
     // dF_args_new
     update_dF_args(params['dF']);
@@ -217,24 +264,78 @@ function update_params() {
     precision = Number(document.getElementById('precision').value);
     if (document.getElementById('precision').value) {
         if (!offset) offset = 0;
-        document.getElementById('offset').value
+
         params['nullcline'] = {
             offset,
             precision
         };
     }
 
-    params['path'] = `${__dirname}/svg/`
+    params['path'] = `${__dirname}/svg/`;
 
+    prev_params = params;
     return params
 }
 
-function plot() {
+function set_params(new_params) {
+    // dF
+    editor.setValue(new_params['dF']);
+
+    // Range
+    document.getElementById('x_min').value = new_params["Range"]["x_min"];
+    document.getElementById('x_max').value = new_params["Range"]["x_max"];
+    document.getElementById('y_min').value = new_params["Range"]["y_min"];
+    document.getElementById('y_max').value = new_params["Range"]["y_max"];
+
+    // Optionals
+    if (!(new_params['MeshDim'] === undefined))
+        document.getElementById('MeshDim').value = new_params['MeshDim'];
+
+    if (!(new_params['Density'] === undefined))
+        document.getElementById('Density').value = new_params['Density'];
+
+    if (!(new_params['Polar'] === undefined))
+        document.getElementById('Polar').checked = Boolean(new_params['Polar']);
+
+    if (!(new_params['xScale'] === undefined))
+        document.getElementById('xScale').value = new_params['xScale'];
+
+    if (!(new_params['yScale'] === undefined))
+        document.getElementById('yScale').value = new_params['yScale'];
+
+    if (!(new_params['Colorbar'] === undefined))
+        document.getElementById('Colorbar').checked = Boolean(new_params['Colorbar']);
+
+    if (!(new_params['Title'] === undefined))
+        document.getElementById('Title').value = new_params['Title'];
+
+    if (!(new_params['xlabel'] === undefined))
+        document.getElementById('xlabel').value = new_params['xlabel'];
+
+    if (!(new_params['ylabel'] === undefined))
+        document.getElementById('ylabel').value = new_params['ylabel'];
+
+    if (!(new_params['color'] === undefined))
+        document.getElementById('color').value = new_params['color'];
+
+    // Nullclines
+    if (new_params['nullcline']){
+        document.getElementById('offset').value = Number(new_params['nullcline']['offset']);
+        document.getElementById('precision').value = Number(new_params['nullcline']['precision']);
+    }
+
+    prev_params = new_params;
+    return new_params
+}
+
+function plot(_params=false) {
     exit_code_display()
-    params = update_params();
+    params = (!_params)? update_params(): _params;
+
     setLoadingState(true);
     electron.ipcRenderer.send("request-plot", params);
 }
+
 
 function get_python_code() {
     params = update_params();
@@ -247,6 +348,15 @@ function setLoadingState(isLoading) {
         document.getElementById('img').style.display = 'none';
         document.getElementById('code_div').style.display = 'none';
         document.getElementById('error').style.display = 'none';
+    }
+    else{
+        
+        if (plot_visible) {
+            document.getElementById('img').style.display = 'flex';
+        }
+        else{
+            document.getElementById('code_div').style.display = 'flex';
+        }
     }
     document.getElementById('loader').style.display = isLoading ? 'flex' : 'none';
 }

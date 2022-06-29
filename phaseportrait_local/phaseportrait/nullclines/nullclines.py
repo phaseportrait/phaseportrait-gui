@@ -76,6 +76,17 @@ class Nullcline2D():
             
     def update_dF_args(self):
         self.dF_args = self.portrait.dF_args.copy()
+        
+    def set_range(self, new_range):
+        """Updates the nullclines range
+
+        Parameters
+        ----------
+        range : list
+            Must be a list of x axis range list and y axis range list
+        """
+        self.xRange = new_range[0,:]
+        self.yRange = new_range[1,:]
            
     def plot(self, *, axis=None):
         """Plots the nullclines in the given axis

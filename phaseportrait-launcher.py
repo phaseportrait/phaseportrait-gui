@@ -1,7 +1,8 @@
 try:
     from phaseportrait import PhasePortrait2DManager
 except ImportError:
-    from phaseportrait_local.phaseportrait import PhasePortrait2DManager
+    from phaseportrait_local.phaseportrait import PhasePortrait2D
+except ModuleNotFoundError:
     from phaseportrait_local.phaseportrait import PhasePortrait2D
 
 import io
@@ -9,6 +10,8 @@ import os
 import json
 import mimetypes
 from pathlib import Path
+
+from matplotlib import pyplot as plt
 
 
 try:
@@ -24,64 +27,18 @@ import tornado.websocket
 from matplotlib.backends.backend_webagg_core import (
     FigureManagerWebAgg, new_figure_manager_given_figure)
 
-# This html is used in the tornado local server with the figure
-
 files_path = '/'.join(__file__.split('\\')[:-1])
 
-# html_content = f"""
-# <html>
-#   <head>
-#     <link rel="stylesheet" href="{files_path}/web_backend/css/page.css" type="text/css">
-#     <link rel="stylesheet" href="{files_path}/web_backend/css/boilerplate.css"
-#           type="text/css" />
-#     <link rel="stylesheet" href="{files_path}/web_backend/css/fbm.css" type="text/css" />
-#     <link rel="stylesheet" href="{files_path}/web_backend/css/mpl.css" type="text/css">
-#     <script src="{files_path}/web_backend/js/mpl.js"></script>
-#     <script>"""
-# html_content += """
-#       /* This is a callback that is called when the user saves
-#          (downloads) a file.  Its purpose is really to map from a
-#          figure and file format to a url in the application. */
-#       function ondownload(figure, format) {
-#         window.open('download.' + format, '_blank');
-#       };
-#       function ready(fn) {
-#         if (document.readyState != "loading") {
-#           fn();
-#         } else {
-#           document.addEventListener("DOMContentLoaded", fn);
-#         }
-#       }
-#       ready(
-#         function() {
-#           /* It is up to the application to provide a websocket that the figure
-#              will use to communicate to the server.  This websocket object can
-#              also be a "fake" websocket that underneath multiplexes messages
-#              from multiple figures, if necessary. */
-#           var websocket_type = mpl.get_websocket_type();
-#           var websocket = new websocket_type("%(ws_uri)sws");
-#           // mpl.figure creates a new figure on the webpage.
-#           var fig = new mpl.figure(
-#               // A unique numeric identifier for the figure
-#               %(fig_id)s,
-#               // A websocket object (or something that behaves like one)
-#               websocket,
-#               // A function called when a file type is selected for download
-#               ondownload,
-#               // The HTML element in which to place the figure
-#               document.getElementById("figure"));
-#         }
-#       );
-#     </script>
-#     <title>PhasePortrait</title>
-#   </head>
-#   <body>
-#     <div id="figure">
-#     </div>
-#   </body>
-# </html>
-# """
 
+class Logger:
+    def __init__(self):
+        self.log_file = open("log.txt", 'a')
+    
+    def __call__(self, message):
+        self.log_file.write(message)
+    
+    def __del__(self):
+        self.log_file.close()
 
 class PhasePortraitServer(tornado.web.Application):
     class MainPage(tornado.web.RequestHandler):
@@ -142,6 +99,7 @@ class PhasePortraitServer(tornado.web.Application):
         """
         supports_binary = True
         _prev_ = None
+        logger = Logger()
 
         def open(self):
             # Register the websocket with the FigureManager.
@@ -167,6 +125,7 @@ class PhasePortraitServer(tornado.web.Application):
                 self.supports_binary = message['value']
             else:
                 manager = self.application.manager
+                
                 if message['type'] == 'button_release' or \
                     (self._prev_ == 'home'):
                     ax = self.application.phaseportrait.ax
@@ -174,10 +133,13 @@ class PhasePortraitServer(tornado.web.Application):
                     y_lim = ax.get_ylim()
                     ax.cla()
                     self.application.phaseportrait.Range = [x_lim, y_lim]
-                    self.application.phaseportrait.plot()
-                
+                    try:
+                        self.application.phaseportrait.plot()
+                    except Exception as e:
+                        self.logger(e)
                 self._prev_ = message.get('name', None)
                 manager.handle_json(message)
+                
 
         def send_json(self, content):
             self.write_message(json.dumps(content))
@@ -193,6 +155,8 @@ class PhasePortraitServer(tornado.web.Application):
           
     # TODO: este debería ser el websocket que relaciona electron con python      
     class PPSocket(tornado.websocket.WebSocketHandler):
+        logger = Logger()
+        
         def open(self):
             # manager = self.application.manager
             # manager.add_web_socket(self)
@@ -205,13 +169,17 @@ class PhasePortraitServer(tornado.web.Application):
             # manager.remove_web_socket(self)
             pass
 
-
         def on_message(self, message):
-            message = json.loads(message)
-            result = self.application.phaseportrait.manager.handle_json(message)
-            if result == 1:
-                self.application.start_phaseportrait(message=message)
-            self.write_message(str(result))
+            self.logger(message)
+            try:
+                message = json.loads(message)
+                result = self.application.phaseportrait.manager.handle_json(message)
+                if result == 1:
+                    self.application.start_phaseportrait(message=message)
+                self.write_message(str(result))
+            except Exception as e:
+                self.logger(e)
+                self.write_error(e)
             
 
     def start_phaseportrait(self, *, message=None):

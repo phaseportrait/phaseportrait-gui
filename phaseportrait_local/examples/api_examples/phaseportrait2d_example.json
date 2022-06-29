@@ -1,6 +1,6 @@
 {
     "dF" : "def circle(x,y,*,w=0):\n\treturn -y, x*w",
-    "Polar" : false,
+    "Polar" : true,
 
     "dF_args" : {
         "w" : 1

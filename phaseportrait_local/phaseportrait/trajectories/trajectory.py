@@ -93,7 +93,7 @@ class trajectory:
 
         self._dimension = dimension
         self.dF_args = dF_args.copy()
-        self.dF = dF 
+        
         self.Range = Range
 
         try: 
@@ -129,6 +129,8 @@ class trajectory:
         if self.color is None:
             self.color =  'viridis'
         self._mark_start_point = kargs.get('mark_start_point')
+        
+        self.dF = dF 
 
     # This functions must be overwriten on child classes:
     def _prepare_plot(self):...
@@ -266,6 +268,16 @@ class trajectory:
             if self._mark_start_point:
                 self._scatter_start_point(val_init)
                 
+        for ax in self.ax.values():
+            try:
+                ax.set_xScale(self.xScale)
+            except AttributeError:
+                pass
+            try:
+                ax.set_yScale(self.yScale)
+            except AttributeError:
+                pass
+                
         for fig in self.fig.values():
             if self.lines:
                 fig.legend()
@@ -326,7 +338,11 @@ class trajectory:
         else:
             if len(sig.parameters)<self._dimension + len(self.dF_args):
                 raise exceptions.dFInvalid(sig, self.dF_args)
-        self._dF = func
+           
+        self._dF = func 
+        for t in self.trajectories:
+            t.dF = self._dF
+        
 
 
     @property

@@ -18,6 +18,33 @@ class Manager:
         # TODO:
             _description_
         """
+        
+        if new_dF := configuration.get('dF'):
+            try:
+                match = re.search(r"def\s+(\w+)\(", new_dF)
+                function_name = match.group(1)
+                # match = re.search(r"(\s+)def", new_dF)
+                # if match is not None:
+                #     new_dF = new_dF.replace(match.group(0), "\ndef")
+                # del match
+
+                exec(new_dF, globals())
+                # fig = self.portrait.fig
+                # fig.clear()
+
+                # if configuration["phaseportrait_object_type"] == "PhasePortrait2D":
+                #     from ..PhasePortrait2D import PhasePortrait2D
+                #     self.portrait = PhasePortrait2D(lambda x,y:(-y,x), [[0,1],[0,1]], fig=fig)
+                
+                # if configuration["phaseportrait_object_type"] == "Trajectory2D":
+                #     from ..Trajectories2D import Trajectory2D
+                #     self.portrait = Trajectory2D(lambda x,y:(-y,x), Range=[[0,1],[0,1]], figZ=fig)
+                #     self.portrait.initial_position()
+                    
+                    
+                self.portrait.dF = globals()[function_name]
+            except  Exception as e:
+                return 1
 
         if range := configuration.get('Range'):
             self.portrait.Range = [[range['x_min'],range['x_max']],
@@ -30,11 +57,14 @@ class Manager:
                 setattr(self.portrait, k, v)
                 
         if nc:=configuration.get('nullcline'):
+            self.portrait.nullclines = []
             self.portrait.add_nullclines(**nc)
+                    
             
+        # if new_dF make new portrait
         if sls:=configuration.get('sliders'):
             for sl_name in sls:
-                # If a slider is already created with same name ends are updated and value is changed
+            # If a slider is already created with same name ends are updated and value is changed
                 if slider:=self.portrait.sliders.get(sl_name):
                         slider.update_slider_ends(sls[sl_name]["min"], sls[sl_name]["max"])
                         slider.value = configuration["dF_args"][sl_name]
@@ -46,22 +76,7 @@ class Manager:
                         valinterval=[sls[sl_name]["min"], sls[sl_name]["max"]],
                         valstep= (sls[sl_name]["max"]-sls[sl_name]["min"])/50
                         )
-                    
-                    
-        if new_dF := configuration.get('dF'):
-            try:
-                match = re.search(r"def\s+(\w+)\(", new_dF)
-                function_name = match.group(1)
-                # match = re.search(r"(\s+)def", new_dF)
-                # if match is not None:
-                #     new_dF = new_dF.replace(match.group(0), "\ndef")
-                # del match
-
-                exec(new_dF, globals())
-                self.portrait.dF = globals()[function_name]
-            except  Exception as e:
-                return 1
-        
+            
         # Clean axis and replot
         try:
             self.portrait.ax.cla()
@@ -125,7 +140,11 @@ class Manager:
         
         finisher = '\nphase_diagram.plot()\nplt.show()'
 
-        return header +"\n\t\n"+ function +"\n\t\n"+ portrait +"\n"+ portrait_kargs +"\n\t\n"+ nullcline +"\n\t\n"+ finisher
+        final_text = [header, function, portrait+"\n"+portrait_kargs]
+        if nullcline : 
+            final_text.append(nullcline)
+        final_text.append(finisher)
+        return "\n".join(final_text)
         
         
     def handle_json(self, message):

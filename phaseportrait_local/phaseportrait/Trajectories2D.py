@@ -42,7 +42,7 @@ class Trajectory2D(trajectory):
 
     _name_ = 'Trajectory2D'
 
-    def __init__(self, dF, *, Range=None, dF_args={}, n_points=10000, runge_kutta_step=0.01, runge_kutta_freq=1, **kargs):
+    def __init__(self, dF, *, Range=None, dF_args={}, n_points=500, runge_kutta_step=0.01, runge_kutta_freq=1, **kargs):
         """
         Creates an instance of Trjaectoy2D
 
@@ -75,8 +75,12 @@ class Trajectory2D(trajectory):
         self.xlabel = kargs['xlabel'] if kargs.get('xlabel') else 'X'
         self.ylabel = kargs['ylabel'] if kargs.get('ylabel') else 'Y'
 
-
-        figZ, axZ= plt.subplots()
+        
+        figZ = kargs['figZ'] if kargs.get('figZ') else None
+        if figZ is None:
+            figZ, axZ= plt.subplots()
+        else:
+            axZ = figZ.subplots()
 
         self.fig = {
             'Z': figZ,

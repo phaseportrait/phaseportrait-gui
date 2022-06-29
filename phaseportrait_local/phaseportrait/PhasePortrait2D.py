@@ -33,7 +33,7 @@ class PhasePortrait2D:
         Returns the axis and the figure.
     """
     _name_ = 'PhasePortrait2D'
-    def __init__(self, dF, Range, *, MeshDim=30, dF_args={}, Density = 1, Polar = False, Title = 'Phase Portrait', xlabel = 'X', ylabel = r"$\dot{X}$", color='rainbow', xScale='linear', yScale='linear'):
+    def __init__(self, dF, Range, *, MeshDim=30, dF_args={}, Density = 1, Polar = False, Title = 'Phase Portrait', xlabel = 'X', ylabel = r"$\dot{X}$", color='rainbow', xScale='linear', yScale='linear', fig=None, ax=None):
         """
         PhasePortrait2D
         ---------------
@@ -88,7 +88,8 @@ class PhasePortrait2D:
         self._create_arrays()
 
         # Variables for plotting
-        self.fig, self.ax = plt.subplots()
+        self.fig = fig if fig is not None else plt.figure()
+        self.ax = ax if ax is not None else self.fig.subplots()
         self.color = color
         
         self.manager = manager.Manager(self)
@@ -151,6 +152,7 @@ class PhasePortrait2D:
 
         try:
             for nullcline in self.nullclines:
+                nullcline.set_range(self.Range)
                 nullcline.plot()
         except AttributeError:
             pass
