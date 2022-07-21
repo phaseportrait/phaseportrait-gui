@@ -7,6 +7,10 @@ const fs = require('fs');
 
 const WebSocket = require('ws');
 
+
+const DEBUG = false;
+
+
 let {PythonShell} = require('python-shell');
 const { log } = require('console');
 
@@ -36,7 +40,8 @@ function createMainWindow() {
     // Load the index page
     mainWindow.loadFile('index.html');
 
-    // mainWindow.openDevTools()
+    if (DEBUG)
+        mainWindow.openDevTools();
 
     // Link handler
     mainWindow.webContents.setWindowOpenHandler(({url}) => {
@@ -64,16 +69,19 @@ function emptySVGDir() {
 
 app.on('ready', () => {
 
-    python_server_process = spawn('python',[`${__dirname}/phaseportrait-launcher.py`])
-    python_server_process.stdout.on('data', (data) => {
-        console.log(String(data));
-        if (phaseportrait_socket === null){
-            setupPPWebSocket()
-        };
-        updatePlot()
-        
-    });
-    // setupPPWebSocket()
+    if (!DEBUG){
+        python_server_process = spawn('python',[`${__dirname}/phaseportrait-launcher.py`])
+        python_server_process.stdout.on('data', (data) => {
+            console.log(String(data));
+            if (phaseportrait_socket === null){
+                setupPPWebSocket();
+            };
+            updatePlot();
+            
+        });
+    }
+    else
+        setupPPWebSocket();
     
     emptySVGDir();
     createMainWindow();
@@ -139,7 +147,7 @@ function setupPPWebSocket(){
         setTimeout(setupPPWebSocket, 1000);
     };
     phaseportrait_socket.on("error", (err) => {
-        logger.log('error', error);
+        // logger.log('error', error);
         showError(err);
     });
 }
@@ -154,7 +162,6 @@ function showError(message) {
 
 function sendParamsToPython(plot = true, plotParams = []) {
     plotParams["phaseportrait_request"] = plot ? '--plot' : '--code';
-    plotParams["phaseportrait_object_type"] = "PhasePortrait2D"
     phaseportrait_socket.send(JSON.stringify(plotParams))
 }
 

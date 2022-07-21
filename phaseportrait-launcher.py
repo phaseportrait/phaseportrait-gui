@@ -1,46 +1,50 @@
 try:
-    from phaseportrait import PhasePortrait2DManager
-except ImportError:
-    from phaseportrait_local.phaseportrait import PhasePortrait2D
-except ModuleNotFoundError:
-    from phaseportrait_local.phaseportrait import PhasePortrait2D
+    from phaseportrait import PhasePortrait2D, PhasePotrait3D
+except (ImportError, ModuleNotFoundError):
+    from phaseportrait_local import PhasePortrait2D, PhasePortrait3D
 
 import io
-import os
 import json
 import mimetypes
+import os
+import traceback
 from pathlib import Path
-
-from matplotlib import pyplot as plt
-
 
 try:
     import tornado
 except ImportError as err:
     raise RuntimeError("This example requires tornado.") from err
-import matplotlib as mpl
-import numpy as np
+
 import tornado.httpserver
 import tornado.ioloop
 import tornado.web
 import tornado.websocket
-from matplotlib.backends.backend_webagg_core import (
-    FigureManagerWebAgg, new_figure_manager_given_figure)
+
+import matplotlib as mpl
+from matplotlib import pyplot as plt
+from matplotlib.backends.backend_webagg_core import \
+    new_figure_manager_given_figure
 
 files_path = '/'.join(__file__.split('\\')[:-1])
 
-
 class Logger:
     def __init__(self):
-        self.log_file = open("log.txt", 'a')
+        # self.log_file = open("log.txt", 'a')
+        ...
     
     def __call__(self, message):
-        self.log_file.write(message)
+        with open("log.txt", 'a') as log_file:
+            # log_file.write(repr(message)+'\n')
+            # log_file.write(traceback.format_exc(message) + '\n')
+            traceback.print_exc(file=log_file)
     
     def __del__(self):
-        self.log_file.close()
+        # self.log_file.close()
+        ...
 
 class PhasePortraitServer(tornado.web.Application):
+    logger = Logger()
+
     class MainPage(tornado.web.RequestHandler):
         """
         Serves the main HTML page.
@@ -66,7 +70,7 @@ class PhasePortraitServer(tornado.web.Application):
 
         def get(self):
             self.set_header('Content-Type', 'application/javascript')
-            js_content = open(os.path.join(os.path.dirname(__file__), 'web_backend\\js\\mpl.js'), 'r').read()
+            js_content = open(os.path.join(os.path.dirname(__file__), 'web_backend/js/mpl.js'), 'r').read()
             self.write(js_content)
             
 
@@ -136,6 +140,7 @@ class PhasePortraitServer(tornado.web.Application):
                     try:
                         self.application.phaseportrait.plot()
                     except Exception as e:
+                        self.write_error(e)
                         self.logger(e)
                 self._prev_ = message.get('name', None)
                 manager.handle_json(message)
@@ -152,21 +157,15 @@ class PhasePortraitServer(tornado.web.Application):
                     blob.encode('base64').replace('\n', ''))
                 self.write_message(data_uri)
                 
-          
-    # TODO: este debería ser el websocket que relaciona electron con python      
+   
     class PPSocket(tornado.websocket.WebSocketHandler):
         logger = Logger()
         
         def open(self):
-            # manager = self.application.manager
-            # manager.add_web_socket(self)
-
             if hasattr(self, 'set_nodelay'):
                 self.set_nodelay(True)
 
         def on_close(self):
-            # manager = self.application.manager
-            # manager.remove_web_socket(self)
             pass
 
         def on_message(self, message):
@@ -178,28 +177,47 @@ class PhasePortraitServer(tornado.web.Application):
                     self.application.start_phaseportrait(message=message)
                 self.write_message(str(result))
             except Exception as e:
+                self.application.start_phaseportrait(message=message)
                 self.logger(e)
-                self.write_error(e)
+                self.write_error(str(e))
             
 
     def start_phaseportrait(self, *, message=None):
-        self.phaseportrait = PhasePortrait2D(lambda x,y: (y,-x), [[0,1], [0,1]])
-        self.phaseportrait.plot()
-        
-        self.figure = self.phaseportrait.fig
-        self.manager = new_figure_manager_given_figure(id(self.figure), self.figure)
-        if message is not None:
-            result = self.application.phaseportrait.manager.handle_json(message)
+        try:
+            dF = lambda x,y: (y,-x)
+            Range = [[0,1], [0,1]]
+
+            if message:
+                pp_object = globals()[message["phaseportrait_object_type"]]
+
+                if message["dimension"] == 3:
+                    dF = lambda x,y,z: (y,-x,-z)
+                    Range = [[-1,1], [-1,1], [-1,1]]
+
+            else:
+                pp_object = PhasePortrait2D
+
+            self.phaseportrait = pp_object(dF, Range)
+            
+            
+            self.figure = self.phaseportrait.fig
+            self.manager = new_figure_manager_given_figure(id(self.figure), self.figure)
+            if message is not None:
+                result = self.phaseportrait.manager.handle_json(message)
+            else:
+                self.phaseportrait.plot()
+        except Exception as e:
+            self.logger(e)
+            self.write_error(str(e))
 
     def __init__(self):
         self.start_phaseportrait()
 
         super().__init__([
             # Static files for the CSS and JS
-            (r'/_static/(.*)',
+            (r'/mpl_web_backend/(.*)',
              tornado.web.StaticFileHandler,
-            #  {'path': FigureManagerWebAgg.get_static_file_path()}),
-            {'path': os.path.join(os.path.dirname(__file__), 'web_backend')}),
+            {'path': os.path.join(os.path.dirname(__file__), 'web_backend').replace("\\", "/")}),
 
             # Static images for the toolbar
             (r'/_images/(.*)',
@@ -218,18 +236,14 @@ class PhasePortraitServer(tornado.web.Application):
             # Handles the downloading (i.e., saving) of static images
             (r'/download.([a-z0-9.]+)', self.Download),
             
-            # TODO: este es el nuestro, para nosotros. Creo que se hace así
+            # For comunication with PhasePortrait
             ('/pp', self.PPSocket)
         ])
 
 if __name__ == '__main__':
+    # mpl.use("WebAgg")
+    mpl.rc_params["backend"] = "WebAgg"
 
-    # modes = {
-    #     '--code' : PhasePortrait2DManager.json_to_python_code,
-    #     '--plot' : PhasePortrait2DManager.plot_from_json
-    # }
-    # result = modes[argv[1]](argv[2])
-    
     application = PhasePortraitServer()
     http_server = tornado.httpserver.HTTPServer(application)
     http_server.listen(8080)

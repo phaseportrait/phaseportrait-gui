@@ -9,6 +9,8 @@ let editor;
 let code_display;
 const defaultFunction = 'def a(x, y, *, w=-1):\n\treturn w*y, x';
 
+const dF_dimension_regex = /(?<=def\s+\w\s*\()[^\*]+(?=,\s*\*)|(?<=def\s+\w\s*\()[^\*]+(?=\))/;
+
 let params = {};
 let prev_params = {};
 let dF_args = {};
@@ -35,6 +37,7 @@ window.onload = () => {
 
     editor.on('change', e => {
         update_dF_args(e.getValue());
+        update_range_div();
     });
 
     let parameters_div = document.getElementById('parameters_div');
@@ -141,11 +144,31 @@ function remove_dFarg(param_name) {
     document.getElementById(`${param_name}_div`)?.remove();
 }
 
+function update_range_div() { 
+
+    // FEATURE: add automatic names for mandatory parameters
+    params['dF'] = !!editor.getValue() ? editor.getValue() : defaultFunction;
+
+    // Find dF mandatory parameters dimension
+    if (dF_dimension_regex.test(params['dF'])) {
+        const dF_dimension_match = params['dF'].match(dF_dimension_regex);
+        let dimension = dF_dimension_match[0].split(',').length;
+
+        if (dimension==3) {
+            document.getElementById('z_range_div').style.display = 'flex';
+        }
+        else
+            document.getElementById('z_range_div').style.display = 'none';
+    }
+}
+
+
 function update_dF_args(functionValue) {
     const dF_args_new = {};
     const sliders_new = {};
     const dF_args_regex = /(?<=\*\s*,)[^\\)]*/;
 
+    // If function is not correctly writen remove all dF_args divs
     if (!dF_args_regex.test(functionValue)) {
         Object.keys(dF_args).forEach(function (key) {
             if (!(key in dF_args_new)) {
@@ -162,6 +185,8 @@ function update_dF_args(functionValue) {
         return;
     }
 
+
+    // Get new dF_args and values from dF functionValue
     const dF_args_match = functionValue.match(dF_args_regex);
     if (dF_args_match) {
         const arguments = dF_args_match[0].replace(/\s+/g, '').split(',');
@@ -175,6 +200,8 @@ function update_dF_args(functionValue) {
             }
         });
     }
+
+    // For each dF_args_new get value, sliders min and max, and add div if not exists
     Object.keys(dF_args_new).forEach(function (key) {
         if (key in dF_args) {
             dF_args_new[key] = Number(document.getElementById(`${key}_value`).value);
@@ -186,6 +213,8 @@ function update_dF_args(functionValue) {
             dF_args_length += 1;
         }
     });
+
+    // Update dF_args to dF_args_new: remove div not valid
     Object.keys(dF_args).forEach(function (key) {
         if (!(key in dF_args_new)) {
             remove_dFarg(key);
@@ -206,6 +235,11 @@ function update_params() {
     // dF
     params['dF'] = !!editor.getValue() ? editor.getValue() : defaultFunction;
 
+
+    // Find dF mandatory parameters dimension
+    const dF_dimension_match = params['dF'].match(dF_dimension_regex);
+    params["dimension"] = dF_dimension_match[0].split(',').length;
+
     // if (params['dF'] === prev_params?['dF']:''){
     //     params = {};
     // }
@@ -221,6 +255,10 @@ function update_params() {
     x_max = document.getElementById('x_max').value ? Number(document.getElementById('x_max').value) : 1;
     y_min = document.getElementById('y_min').value ? Number(document.getElementById('y_min').value) : 0;
     y_max = document.getElementById('y_max').value ? Number(document.getElementById('y_max').value) : 1;
+
+    z_min = document.getElementById('z_min').value ? Number(document.getElementById('z_min').value) : 0;
+    z_max = document.getElementById('z_max').value ? Number(document.getElementById('z_max').value) : 1;
+
     params['Range'] = {
         x_min,
         x_max,
@@ -228,9 +266,30 @@ function update_params() {
         y_max
     };
 
+    if (params['dimension'] == 3) {
+        params['Range'] = {
+            x_min,
+            x_max,
+            y_min,
+            y_max,
+            z_min,
+            z_max
+        };
+    }
+
     // Optionals
     MeshDim = Number(document.getElementById('MeshDim').value);
     if (MeshDim) params['MeshDim'] = MeshDim;
+
+    // TODO: make other portraits available as trajectories or maps.
+    if (params["dimension"]==3) {
+        params['MeshDim'] = Math.min(params['MeshDim']?params['MeshDim']:8, 8);
+        params["phaseportrait_object_type"] = "PhasePortrait3D";
+    }
+    if (params["dimension"]==2) {
+        params["phaseportrait_object_type"] = "PhasePortrait2D";
+    }
+    
 
     Density = Number(document.getElementById('Density').value);
     if (Density) params['Density'] = Density;
@@ -244,7 +303,7 @@ function update_params() {
     yScale = document.getElementById('yScale').value;
     if (yScale) params['yScale'] = yScale;
 
-    Colorbar = Boolean(document.getElementById('Colorbar').value);
+    Colorbar = Boolean(document.getElementById('Colorbar').checked);
     if (Colorbar) params['Colorbar'] = Colorbar;
 
     Title = document.getElementById('Title').value;
@@ -332,14 +391,14 @@ function plot(_params=false) {
     exit_code_display()
     params = (!_params)? update_params(): _params;
 
-    setLoadingState(true);
+    // setLoadingState(true);
     electron.ipcRenderer.send("request-plot", params);
 }
 
 
 function get_python_code() {
     params = update_params();
-    setLoadingState(true);
+    // setLoadingState(true);
     electron.ipcRenderer.send("request-code", params);
 }
 
