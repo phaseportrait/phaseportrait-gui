@@ -20,8 +20,18 @@
 }
 
 /* Toolbar and items */
+.mpl-toolbar-container {
+  width: 100%;
+  justify-content: center;
+  display: inline-block;
+  padding-top: 0.5rem;
+}
+
 .mpl-toolbar {
   width: 100%;
+  justify-content: center;
+  display: flex;
+  /* padding-top: 0.; */
 }
 
 .mpl-toolbar div.mpl-button-group {
@@ -32,6 +42,12 @@
   margin-left: 0.5em;
 }
 
+.mpl-message {
+  display: flex;
+  padding-top: 0.5rem;
+  justify-content: center;
+}
+
 .mpl-widget {
   background-color: #fff;
   border: 1px solid #ccc;
@@ -40,6 +56,10 @@
   color: #333;
   padding: 6px;
   vertical-align: middle;
+}
+.mpl-save-select {
+  padding-top: 0.3rem;
+  border-radius: 0.5rem;
 }
 
 .mpl-widget:disabled,
