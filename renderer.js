@@ -92,6 +92,7 @@ electron.ipcRenderer.on("show-code", (event, code) => {
 electron.ipcRenderer.on("show-error", (event, message) => {
     addAlert(message);
     document.getElementById('error').style.display = 'flex';
+    setLoadingState(true)
     setLoadingState(false);
 });
 
@@ -390,6 +391,10 @@ function set_params(new_params) {
 function plot(_params=false) {
     exit_code_display()
     params = (!_params)? update_params(): _params;
+
+    // let plot_div = document.getElementById("img");
+    // params["__width__"] = plot_div.offsetWidth;
+    // params["__height__"] = plot_div.offsetHeight;
 
     // setLoadingState(true);
     electron.ipcRenderer.send("request-plot", params);

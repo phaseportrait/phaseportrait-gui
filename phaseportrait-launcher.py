@@ -1,7 +1,7 @@
 try:
     from phaseportrait import PhasePortrait2D, PhasePotrait3D
 except (ImportError, ModuleNotFoundError):
-    from phaseportrait_local import PhasePortrait2D, PhasePortrait3D
+    from phaseportrait_local.phaseportrait import PhasePortrait2D, PhasePortrait3D
 
 import io
 import json
@@ -10,11 +10,7 @@ import os
 import traceback
 from pathlib import Path
 
-try:
-    import tornado
-except ImportError as err:
-    raise RuntimeError("This example requires tornado.") from err
-
+import tornado
 import tornado.httpserver
 import tornado.ioloop
 import tornado.web
@@ -140,7 +136,7 @@ class PhasePortraitServer(tornado.web.Application):
                     try:
                         self.application.phaseportrait.plot()
                     except Exception as e:
-                        self.write_error(e)
+                        print(e, flush=True, end='')
                         self.logger(e)
                 self._prev_ = message.get('name', None)
                 manager.handle_json(message)
@@ -169,6 +165,8 @@ class PhasePortraitServer(tornado.web.Application):
             pass
 
         def on_message(self, message):
+            
+            
             self.logger(message)
             try:
                 message = json.loads(message)
@@ -179,6 +177,7 @@ class PhasePortraitServer(tornado.web.Application):
             except Exception as e:
                 self.application.start_phaseportrait(message=message)
                 self.logger(e)
+                self.write_message(str(e))
                 self.write_error(str(e))
             
 
@@ -208,7 +207,7 @@ class PhasePortraitServer(tornado.web.Application):
                 self.phaseportrait.plot()
         except Exception as e:
             self.logger(e)
-            self.write_error(str(e))
+
 
     def __init__(self):
         self.start_phaseportrait()
@@ -242,7 +241,7 @@ class PhasePortraitServer(tornado.web.Application):
 
 if __name__ == '__main__':
     # mpl.use("WebAgg")
-    mpl.rc_params["backend"] = "WebAgg"
+    mpl.rcParams["backend"] = "WebAgg"
 
     application = PhasePortraitServer()
     http_server = tornado.httpserver.HTTPServer(application)

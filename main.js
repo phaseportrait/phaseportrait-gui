@@ -33,7 +33,6 @@ function createMainWindow() {
             nodeIntegration: true,
             contextIsolation: false,
         },
-        // TODO: no tengo ni idea de qué es esto
         slashes: true
     });
 
@@ -144,12 +143,14 @@ function setupPPWebSocket(){
     // phaseportrait_socket.onopen = ...;
     // phaseportrait_socket.onmessage = ...;
     phaseportrait_socket.onclose = function(){
-        setTimeout(setupPPWebSocket, 1000);
+        setTimeout(setupPPWebSocket, 2000);
+        
     };
     phaseportrait_socket.on("error", (err) => {
         // logger.log('error', error);
         showError(err);
     });
+    phaseportrait_socket.on
 }
 
 function showPythonCode(message) {
