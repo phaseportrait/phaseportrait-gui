@@ -30,7 +30,7 @@ class Logger:
     
     def __call__(self, message):
         with open("log.txt", 'a') as log_file:
-            # log_file.write(repr(message)+'\n')
+            log_file.write(repr(message)+'\n')
             # log_file.write(traceback.format_exc(message) + '\n')
             traceback.print_exc(file=log_file)
     
@@ -83,7 +83,7 @@ class PhasePortraitServer(tornado.web.Application):
             manager.canvas.figure.savefig(buff, format=fmt)
             self.write(buff.getvalue())
 
-    class WebSocket(tornado.websocket.WebSocketHandler):
+    class PlotWebSocket(tornado.websocket.WebSocketHandler):
         """
         A websocket for interactive communication between the plot in
         the browser and the server.
@@ -156,6 +156,7 @@ class PhasePortraitServer(tornado.web.Application):
    
     class PPSocket(tornado.websocket.WebSocketHandler):
         logger = Logger()
+        last_message = None
         
         def open(self):
             if hasattr(self, 'set_nodelay'):
@@ -163,22 +164,36 @@ class PhasePortraitServer(tornado.web.Application):
 
         def on_close(self):
             pass
+        
+        def check_message_diference(self, message, check_list):
+            if self.last_message is None:
+                return True
+            for check in check_list:
+                if self.last_message[check] != message[check]:
+                    return True
+            return False
 
         def on_message(self, message):
             
-            
             self.logger(message)
-            try:
-                message = json.loads(message)
-                result = self.application.phaseportrait.manager.handle_json(message)
-                if result == 1:
-                    self.application.start_phaseportrait(message=message)
-                self.write_message(str(result))
-            except Exception as e:
-                self.application.start_phaseportrait(message=message)
-                self.logger(e)
-                self.write_message(str(e))
-                self.write_error(str(e))
+            message = json.loads(message)
+            
+            
+            
+            if self.check_message_diference(message, ["dimension", "dF", "phaseportrait_object_type"]):
+                figid = self.application.start_phaseportrait(message=message)
+                self.logger(figid)
+                self.write_message(str(figid))
+            else:
+                try:
+                    result = self.application.phaseportrait.manager.handle_json(message)
+                    if result == 1:
+                        figid = self.application.start_phaseportrait(message=message)
+                        self.write_message(str(figid))
+                except Exception as e:
+                    self.write_error(str(e))
+            
+            self.last_message = message
             
 
     def start_phaseportrait(self, *, message=None):
@@ -208,29 +223,30 @@ class PhasePortraitServer(tornado.web.Application):
         except Exception as e:
             self.logger(e)
 
+        return id(self.figure)
 
     def __init__(self):
-        self.start_phaseportrait()
+        self.FigId = self.start_phaseportrait()
 
         super().__init__([
-            # Static files for the CSS and JS
-            (r'/mpl_web_backend/(.*)',
-             tornado.web.StaticFileHandler,
-            {'path': os.path.join(os.path.dirname(__file__), 'web_backend').replace("\\", "/")}),
+            # # Static files for the CSS and JS
+            # (r'/mpl_web_backend/(.*)',
+            # #  tornado.web.StaticFileHandler,
+            # {'path': os.path.join(os.path.dirname(__file__), 'web_backend').replace("\\", "/")}),
 
-            # Static images for the toolbar
-            (r'/_images/(.*)',
-             tornado.web.StaticFileHandler,
-             {'path': Path(mpl.get_data_path(), 'images')}),
+            # # Static images for the toolbar
+            # (r'/web_backend/images/(.*)',
+            #  tornado.web.StaticFileHandler,
+            #  {'path': Path(mpl.get_data_path(), 'images')}),
 
             # The page that contains all of the pieces
-            ('/', self.MainPage),
+            # ('/', self.MainPage),
 
-            ('/mpl.js', self.MplJs),
+            # ('/mpl.js', self.MplJs),
 
             # Sends images and events to the browser, and receives
             # events from the browser
-            ('/ws', self.WebSocket),
+            ('/ws', self.PlotWebSocket),
 
             # Handles the downloading (i.e., saving) of static images
             (r'/download.([a-z0-9.]+)', self.Download),
@@ -246,5 +262,5 @@ if __name__ == '__main__':
     application = PhasePortraitServer()
     http_server = tornado.httpserver.HTTPServer(application)
     http_server.listen(8080)
-    print("localhost:8080", flush=True, end='')
+    print(f"localhost:8080, {application.FigId}", flush=True, end='')
     tornado.ioloop.IOLoop.current().start()

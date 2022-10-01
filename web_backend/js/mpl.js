@@ -357,8 +357,8 @@ mpl.figure.prototype._init_toolbar = function () {
         button.addEventListener('mouseover', on_mouseover_closure(tooltip));
 
         var icon_img = document.createElement('img');
-        icon_img.src = '_images/' + image + '.png';
-        icon_img.srcset = '_images/' + image + '_large.png 2x';
+        icon_img.src = 'web_backend/images/' + image + '.png';
+        icon_img.srcset = 'web_backend/images/' + image + '_large.png 2x';
         icon_img.alt = tooltip;
         button.appendChild(icon_img);
 
@@ -501,8 +501,11 @@ mpl.figure.prototype.updated_canvas_event = function () {
 // Called in the figure constructor.
 mpl.figure.prototype._make_on_message_function = function (fig) {
     return function socket_on_message(evt) {
-        if (evt.data instanceof Blob) {
-            var img = evt.data;
+        if (evt.data instanceof Buffer){
+            let data = new Blob([new Uint8Array(evt.data)]);
+        // }
+        // if (data instanceof Blob) {
+            var img = data;//.buffer;
             if (img.type !== 'image/png') {
                 /* FIXME: We get "Resource interpreted as Image but
                  * transferred with MIME type text/plain:" errors on
@@ -534,8 +537,14 @@ mpl.figure.prototype._make_on_message_function = function (fig) {
             return;
         }
 
-        var msg = JSON.parse(evt.data);
-        var msg_type = msg['type'];
+        try {
+            var msg = JSON.parse(evt.data);
+            var msg_type = msg['type'];
+        } catch (e) {
+            return;
+        }
+        
+        
 
         // Call the  "handle_{type}" callback, which takes
         // the figure and JSON message as its only arguments.

@@ -4,6 +4,7 @@ require('codemirror/addon/display/placeholder');
 
 const electron = require("electron");
 const cm = require('codemirror');
+const WebSocket = require('ws');
 
 let editor;
 let code_display;
@@ -19,6 +20,7 @@ let dF_args_length = 0;
 
 let plot_visible = true;
 let alertId = 0;
+
 
 window.onload = () => {
     editor = cm.fromTextArea(document.getElementById('codemirror-container'), {
@@ -72,16 +74,36 @@ electron.ipcRenderer.on("load-plot", (event, filename) => {
         document.getElementById("code_div").style.display = 'none';
         plot_visible = !plot_visible;
     }
-    let img = document.getElementById("img")
-    // document.getElementById("img").src = `${__dirname}/svg/${filename}`;
-    img.src = filename;
+    let img = document.getElementById("figure")
+    // document.getElementById("figure").src = `${__dirname}/svg/${filename}`;
+    // img.src = filename;
     img.style.display = 'flex';
     setLoadingState(false);
 });
 
+electron.ipcRenderer.on("create-figure", (event, FigId, ws_uri) => {
+    let _websocket_type_ = get_websocket_type();
+    var mpl_websocket = new _websocket_type_(`${ws_uri}ws`);
+
+    ondownload = (figure, format) => {
+        window.open(figure.id + '/download.' + format, '_blank');
+    };
+
+    var fig = new window.mpl.figure(
+        // A unique numeric identifier for the figure
+        FigId,
+        // A websocket object (or something that behaves like one)
+        mpl_websocket,
+        // A function called when a file type is selected for download
+        ondownload,
+        // The HTML element in which to place the figure
+        document.getElementById("figure"));
+});
+
+
 electron.ipcRenderer.on("show-code", (event, code) => {
     if (plot_visible) {
-        document.getElementById("img").style.display = 'none';
+        document.getElementById("figure").style.display = 'none';
         plot_visible = !plot_visible;
     }
     document.getElementById("code_div").style.display = 'flex';
@@ -392,7 +414,7 @@ function plot(_params=false) {
     exit_code_display()
     params = (!_params)? update_params(): _params;
 
-    // let plot_div = document.getElementById("img");
+    // let plot_div = document.getElementById("figure");
     // params["__width__"] = plot_div.offsetWidth;
     // params["__height__"] = plot_div.offsetHeight;
 
@@ -409,14 +431,14 @@ function get_python_code() {
 
 function setLoadingState(isLoading) {
     if (isLoading) {
-        document.getElementById('img').style.display = 'none';
+        document.getElementById('figure').style.display = 'none';
         document.getElementById('code_div').style.display = 'none';
         document.getElementById('error').style.display = 'none';
     }
     else{
         
         if (plot_visible) {
-            document.getElementById('img').style.display = 'flex';
+            document.getElementById('figure').style.display = 'flex';
         }
         else{
             document.getElementById('code_div').style.display = 'flex';
@@ -452,7 +474,7 @@ function toggleFullScreenMode() {
 
 function exit_code_display() {
     if (!plot_visible) {
-        document.getElementById("img").style.display = null;
+        document.getElementById("figure").style.display = null;
         document.getElementById("code_div").style.display = 'none';
         plot_visible = !plot_visible;
     }
@@ -499,3 +521,18 @@ function removeAllAlerts() {
     alertsContainer.style.display = 'none';
     alerts.innerHTML = '';
 }
+
+function get_websocket_type() {
+    if (typeof WebSocket !== 'undefined') {
+        return WebSocket;
+    } else if (typeof MozWebSocket !== 'undefined') {
+        return MozWebSocket;
+    } else {
+        alert(
+            'Your browser does not have WebSocket support. ' +
+                'Please try Chrome, Safari or Firefox ≥ 6. ' +
+                'Firefox 4 and 5 are also supported but you ' +
+                'have to enable WebSockets in about:config.'
+        );
+    }
+};

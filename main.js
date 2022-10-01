@@ -9,9 +9,8 @@ const WebSocket = require('ws');
 
 
 const DEBUG = false;
+const DEBUG_RENDER = true;
 
-
-let {PythonShell} = require('python-shell');
 const { log } = require('console');
 
 const logger = new console.Console(fs.createWriteStream(`${__dirname}/log.txt`));
@@ -21,6 +20,9 @@ const python_options = fs.createReadStream(`${__dirname}/python_settings.json`)
 let mainWindow = null;
 let python_server_process = null;
 let phaseportrait_socket = null; 
+// let mpl_websocket = null;
+let FigId = null;
+let ws_uri = "ws://127.0.0.1:8080/";
 
 function createMainWindow() {
     // Create the browser mainWindow
@@ -39,7 +41,7 @@ function createMainWindow() {
     // Load the index page
     mainWindow.loadFile('index.html');
 
-    if (DEBUG)
+    if (DEBUG||DEBUG_RENDER)
         mainWindow.openDevTools();
 
     // Link handler
@@ -52,7 +54,7 @@ function createMainWindow() {
     mainWindow.on('closed', () => {
         mainWindow = null;
     });
-}
+};
 
 function emptySVGDir() {
     fs.readdir(`${__dirname}/svg`, (err, files) => {
@@ -64,26 +66,36 @@ function emptySVGDir() {
             });
         }
     });
-}
+};
 
 app.on('ready', () => {
+    emptySVGDir();
+    createMainWindow();
 
     if (!DEBUG){
         python_server_process = spawn('python',[`${__dirname}/phaseportrait-launcher.py`])
         python_server_process.stdout.on('data', (data) => {
             console.log(String(data));
+            FigId = String(data).split(',')[1];
+            setupMPLWebSocket();
+
             if (phaseportrait_socket === null){
                 setupPPWebSocket();
             };
-            updatePlot();
             
+            updatePlot();
+            createFigure(FigId, ws_uri);
         });
     }
-    else
+    else{
         setupPPWebSocket();
+        setupMPLWebSocket();
+        updatePlot();
+        FigId = 2409079543600;
+        createFigure(FigId, ws_uri);
+    }
+
     
-    emptySVGDir();
-    createMainWindow();
 
     ipcMain.on('request-plot', (event, plotParams) => {
         plot(plotParams);
@@ -113,13 +125,12 @@ app.on('window-all-closed', () => {
     if (process.platform !== 'darwin') {
       app.quit()
     }
-  })
+});
 
 function updatePlot() {
     // mainWindow.webContents.send('load-plot', filename)
-    mainWindow.webContents.send('load-plot', "http://127.0.0.1:8080/")
-    
-}
+    mainWindow.webContents.send('load-plot', "http://127.0.0.1:8080/");
+};
 
 function get_websocket_type() {
     if (typeof WebSocket !== 'undefined') {
@@ -136,9 +147,14 @@ function get_websocket_type() {
     }
 };
 
+function setupMPLWebSocket() {
+    let mpl_websocket_type = get_websocket_type();
+    // mpl_websocket = new mpl_websocket_type(`${ws_uri}ws`);
+};
+
 function setupPPWebSocket(){
     let web_socket_type = get_websocket_type();
-    phaseportrait_socket = new web_socket_type('ws://127.0.0.1:8080/pp');
+    phaseportrait_socket = new web_socket_type(`${ws_uri}pp`);
     // phaseportrait_socket.onerror = ...;
     // phaseportrait_socket.onopen = ...;
     // phaseportrait_socket.onmessage = ...;
@@ -151,20 +167,24 @@ function setupPPWebSocket(){
         showError(err);
     });
     phaseportrait_socket.on
+};
+
+function createFigure(FigId, ws_uri) {
+    mainWindow.webContents.send('create-figure', FigId, ws_uri);
 }
 
 function showPythonCode(message) {
     mainWindow.webContents.send('show-code', message);
-}
+};
 
 function showError(message) {
     mainWindow.webContents.send('show-error', message);
-}
+};
 
 function sendParamsToPython(plot = true, plotParams = []) {
     plotParams["phaseportrait_request"] = plot ? '--plot' : '--code';
     phaseportrait_socket.send(JSON.stringify(plotParams))
-}
+};
 
 function plot(plotParams) {
     phaseportrait_socket.removeAllListeners("message");
@@ -172,7 +192,7 @@ function plot(plotParams) {
         updatePlot();
     });
     sendParamsToPython(true, plotParams);
-}
+};
 
 function generateCode(codeParams) {
     phaseportrait_socket.removeAllListeners("message");
@@ -180,4 +200,4 @@ function generateCode(codeParams) {
         showPythonCode(data.toString());
     });
     sendParamsToPython(false, codeParams);
-}
+};

@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html>
 
@@ -8,7 +9,13 @@
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="node_modules/codemirror/lib/codemirror.css">
     <link rel="stylesheet" href="node_modules/codemirror/theme/material.css">
+    <link rel="stylesheet" href="web_backend/css/page.css">
+    <link rel="stylesheet" href="web_backend/css/boilerplate.css">
+    <link rel="stylesheet" href="web_backend/css/fbm.css">
+    <link rel="stylesheet" href="web_backend/css/mpl.css">
     <script src="renderer.js"></script>
+    <script src="web_backend/js/mpl.js"></script>
+    <!-- <script src="web_backend/js/nbagg_mpl.js"></script> -->
 </head>
 
 <body class="dark:bg-gray-600">
@@ -289,7 +296,7 @@
             <div class="image-area__container relative">
 
                 <div id="loader" class="container flex justify-center items-center py-12 select-none"
-                     style="display: none">
+                     style="display: null">
                     <img src="./icons/phaseportrait_icon.ico" alt="">
                 </div>
 
@@ -298,7 +305,7 @@
                     <img src="./icons/phaseportrait_sadicon.png" alt="">
                 </div>
 
-                <iframe id="img" src="svg/default.svg" class="
+                <!-- <iframe id="img" src="svg/default.svg" class="
                     max-w-full
                     bg-gray-100
                     dark:rounded-xl" 
@@ -308,7 +315,10 @@
                     marginwidth="0" 
                     width="100%" 
                     height="650px">
-                </iframe>
+                </iframe> -->
+
+                <div id="figure" class="rounded-md">
+                </div>
                 
 
                 <!-- Code display -->

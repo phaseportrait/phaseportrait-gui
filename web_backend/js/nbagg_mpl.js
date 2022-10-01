@@ -87,7 +87,7 @@ mpl.figure.prototype.handle_close = function (fig, msg) {
     var dataURL = fig.canvas.toDataURL();
     // Re-enable the keyboard manager in IPython - without this line, in FF,
     // the notebook keyboard shortcuts fail.
-    IPython.keyboard_manager.enable();
+    // IPython.keyboard_manager.enable();
     fig.parent_element.innerHTML =
         '<img src="' + dataURL + '" width="' + width + '">';
     fig.close_ws(fig, msg);
@@ -108,7 +108,7 @@ mpl.figure.prototype.push_to_output = function (_remove_interactive) {
 
 mpl.figure.prototype.updated_canvas_event = function () {
     // Tell IPython that the notebook contents must change.
-    IPython.notebook.set_dirty(true);
+    // IPython.notebook.set_dirty(true);
     this.send_message('ack', {});
     var fig = this;
     // Wait a second, then push the new image to the DOM so
@@ -218,13 +218,13 @@ mpl.figure.prototype._canvas_extra_style = function (el) {
     // reach out to IPython and tell the keyboard manager to turn it's self
     // off when our div gets focus
 
-    // location in version 3
-    if (IPython.notebook.keyboard_manager) {
-        IPython.notebook.keyboard_manager.register_events(el);
-    } else {
-        // location in version 2
-        IPython.keyboard_manager.register_events(el);
-    }
+    // // location in version 3
+    // if (IPython.notebook.keyboard_manager) {
+    //     IPython.notebook.keyboard_manager.register_events(el);
+    // } else {
+    //     // location in version 2
+    //     IPython.keyboard_manager.register_events(el);
+    // }
 };
 
 mpl.figure.prototype._key_event_extra = function (event, _name) {
@@ -232,8 +232,8 @@ mpl.figure.prototype._key_event_extra = function (event, _name) {
     if (event.shiftKey && event.which === 13) {
         this.canvas_div.blur();
         // select the cell after this one
-        var index = IPython.notebook.find_cell_index(this.cell_info[0]);
-        IPython.notebook.select(index + 1);
+        // var index = IPython.notebook.find_cell_index(this.cell_info[0]);
+        // IPython.notebook.select(index + 1);
     }
 };
 
@@ -246,30 +246,30 @@ mpl.find_output_cell = function (html_output) {
     // Note - this is a bit hacky, but it is done because the "notebook_saving.Notebook"
     // IPython event is triggered only after the cells have been serialised, which for
     // our purposes (turning an active figure into a static one), is too late.
-    var cells = IPython.notebook.get_cells();
-    var ncells = cells.length;
-    for (var i = 0; i < ncells; i++) {
-        var cell = cells[i];
-        if (cell.cell_type === 'code') {
-            for (var j = 0; j < cell.output_area.outputs.length; j++) {
-                var data = cell.output_area.outputs[j];
-                if (data.data) {
-                    // IPython >= 3 moved mimebundle to data attribute of output
-                    data = data.data;
-                }
-                if (data['text/html'] === html_output) {
-                    return [cell, data, j];
-                }
-            }
-        }
-    }
+    // var cells = IPython.notebook.get_cells();
+    // var ncells = cells.length;
+    // for (var i = 0; i < ncells; i++) {
+    //     var cell = cells[i];
+    //     if (cell.cell_type === 'code') {
+    //         for (var j = 0; j < cell.output_area.outputs.length; j++) {
+    //             var data = cell.output_area.outputs[j];
+    //             if (data.data) {
+    //                 // IPython >= 3 moved mimebundle to data attribute of output
+    //                 data = data.data;
+    //             }
+    //             if (data['text/html'] === html_output) {
+    //                 return [cell, data, j];
+    //             }
+    //         }
+    //     }
+    // }
 };
 
 // Register the function which deals with the matplotlib target/channel.
 // The kernel may be null if the page has been refreshed.
-if (IPython.notebook.kernel !== null) {
-    IPython.notebook.kernel.comm_manager.register_target(
-        'matplotlib',
-        mpl.mpl_figure_comm
-    );
-}
+// if (IPython.notebook.kernel !== null) {
+//     IPython.notebook.kernel.comm_manager.register_target(
+//         'matplotlib',
+//         mpl.mpl_figure_comm
+//     );
+// }
