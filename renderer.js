@@ -12,6 +12,7 @@ const defaultFunction = 'def a(x, y, *, w=-1):\n\treturn w*y, x';
 
 const dF_dimension_regex = /(?<=def\s+\w\s*\()[^\*]+(?=,\s*\*)|(?<=def\s+\w\s*\()[^\*]+(?=\))/;
 
+let configuration = {};
 let params = {};
 let prev_params = {};
 let dF_args = {};
@@ -20,6 +21,10 @@ let dF_args_length = 0;
 
 let plot_visible = true;
 let alertId = 0;
+
+let mpl_websocket;
+let Figure;
+let ws_uri = "ws://127.0.0.1:8080/";
 
 
 window.onload = () => {
@@ -67,39 +72,33 @@ window.onload = () => {
     document.addEventListener('dragleave', (event) => {
         setLoadingState(false);
     });
+
+    electron.ipcRenderer.send("request-configuration");
 }
 
-electron.ipcRenderer.on("load-plot", (event, filename) => {
+electron.ipcRenderer.on("load-configuration", (event, settings) => {
+    configuration = settings;
+    console.log(configuration);
+    if (configuration["dark"]) toggleDarkMode();
+});
+
+electron.ipcRenderer.on("load-plot", (event, FigId) => {
+    let fig_div = document.getElementById("figure");
+    while (fig_div.lastElementChild) { 
+        fig_div.removeChild(fig_div.lastElementChild);
+    }
+    Figure = null;
+
+    if (!Figure) {
+        create_figure();
+    }
+
     if (!plot_visible) {
         document.getElementById("code_div").style.display = 'none';
         plot_visible = !plot_visible;
     }
-    let img = document.getElementById("figure")
-    // document.getElementById("figure").src = `${__dirname}/svg/${filename}`;
-    // img.src = filename;
-    img.style.display = 'flex';
     setLoadingState(false);
 });
-
-electron.ipcRenderer.on("create-figure", (event, FigId, ws_uri) => {
-    let _websocket_type_ = get_websocket_type();
-    var mpl_websocket = new _websocket_type_(`${ws_uri}ws`);
-
-    ondownload = (figure, format) => {
-        window.open(figure.id + '/download.' + format, '_blank');
-    };
-
-    var fig = new window.mpl.figure(
-        // A unique numeric identifier for the figure
-        FigId,
-        // A websocket object (or something that behaves like one)
-        mpl_websocket,
-        // A function called when a file type is selected for download
-        ondownload,
-        // The HTML element in which to place the figure
-        document.getElementById("figure"));
-});
-
 
 electron.ipcRenderer.on("show-code", (event, code) => {
     if (plot_visible) {
@@ -118,6 +117,24 @@ electron.ipcRenderer.on("show-error", (event, message) => {
     setLoadingState(false);
 });
 
+function create_figure (){
+    let _websocket_type_ = get_websocket_type();
+    mpl_websocket = new _websocket_type_(`${ws_uri}ws`);
+
+    ondownload = (figure, format) => {
+        window.open('http://127.0.0.1:8080/download.' + format, '_blank')
+    };
+
+    Figure = new window.mpl.figure(
+        // A unique numeric identifier for the figure
+        0,
+        // A websocket object (or something that behaves like one)
+        mpl_websocket,
+        // A function called when a file type is selected for download
+        ondownload,
+        // The HTML element in which to place the figure
+        document.getElementById("figure"));
+};
 
 function add_dFarg(param_name, placeholder, min, max) {
     if (dF_args_length == 0) {
@@ -414,11 +431,7 @@ function plot(_params=false) {
     exit_code_display()
     params = (!_params)? update_params(): _params;
 
-    // let plot_div = document.getElementById("figure");
-    // params["__width__"] = plot_div.offsetWidth;
-    // params["__height__"] = plot_div.offsetHeight;
-
-    // setLoadingState(true);
+    setLoadingState(true);
     electron.ipcRenderer.send("request-plot", params);
 }
 
@@ -449,8 +462,12 @@ function setLoadingState(isLoading) {
 
 function toggleDarkMode() {
     const root = document.getElementsByTagName('html')[0];
-    if (root.classList.contains('dark')) root.classList.remove('dark')
-    else root.classList.add('dark')
+    let is_dark = root.classList.contains('dark');
+    if (is_dark) root.classList.remove('dark');
+    else root.classList.add('dark');
+
+    configuration["dark"] = !is_dark;
+    electron.ipcRenderer.send("save-configuration", configuration);
 }
 
 function toggleFullScreenMode() {
