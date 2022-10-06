@@ -9,7 +9,7 @@ const WebSocket = require('ws');
 
 
 const DEBUG = false;
-const DEBUG_RENDER = true;
+const DEBUG_RENDER = false;
 
 
 // Keep a global reference of the mainWindowdow object to avoid garbage collector
@@ -17,7 +17,7 @@ let mainWindow = null;
 let python_server_process = null;
 let phaseportrait_socket = null; 
 // let mpl_websocket = null;
-// let FigId = null;
+let FigId = null;
 let ws_uri = "ws://127.0.0.1:8080/";
 
 function createMainWindow() {
@@ -73,7 +73,7 @@ app.on('ready', () => {
     if (!DEBUG){
         python_server_process = spawn('python',[`${__dirname}/phaseportrait-launcher.py`])
         python_server_process.stdout.on('data', (data) => {
-            console.log(String(data));
+            if (DEBUG || DEBUG_RENDER)  console.log(String(data));
             FigId = String(data).split(',')[1];
             setupMPLWebSocket();
 
@@ -102,9 +102,8 @@ app.on('ready', () => {
     ipcMain.on('request-configuration', (e) => {
         fs.readFile("settings.json", (err, data) => {
             let settings = JSON.parse(data);
-            console.log(settings);
+            if (DEBUG || DEBUG_RENDER)  console.log(settings);
             mainWindow.webContents.send('load-configuration', settings);
-            console.log(settings);
         });
     })
 });
@@ -131,7 +130,7 @@ app.on('window-all-closed', () => {
     }
 });
 
-function updatePlot(FigId) {
+function updatePlot() {
     mainWindow.webContents.send('load-plot', FigId);
 };
 
@@ -187,7 +186,7 @@ function sendParamsToPython(plot = true, plotParams = []) {
 function plot(plotParams) {
     phaseportrait_socket.removeAllListeners("message");
     phaseportrait_socket.on("message", (data) => {
-        console.log(String(data));
+        if (DEBUG || DEBUG_RENDER) console.log(String(data));
         updatePlot(data.toString());
     });
     sendParamsToPython(true, plotParams);
