@@ -11,17 +11,13 @@ const WebSocket = require('ws');
 const DEBUG = false;
 const DEBUG_RENDER = true;
 
-const { log } = require('console');
-
-const logger = new console.Console(fs.createWriteStream(`${__dirname}/log.txt`));
-const python_options = fs.createReadStream(`${__dirname}/python_settings.json`)
 
 // Keep a global reference of the mainWindowdow object to avoid garbage collector
 let mainWindow = null;
 let python_server_process = null;
 let phaseportrait_socket = null; 
 // let mpl_websocket = null;
-let FigId = null;
+// let FigId = null;
 let ws_uri = "ws://127.0.0.1:8080/";
 
 function createMainWindow() {
@@ -56,20 +52,22 @@ function createMainWindow() {
     });
 };
 
-function emptySVGDir() {
-    fs.readdir(`${__dirname}/svg`, (err, files) => {
-        if (err) throw err;
-        for (const file of files) {
-            if (file === 'default.svg') continue;
-            fs.unlinkSync(`${__dirname}/svg/${file}`, err => {
-                if (err) throw err;
-            });
-        }
-    });
-};
+// function emptySVGDir() {
+//     fs.readdir(`${__dirname}/svg`, (err, files) => {
+//         if (err) throw err;
+//         for (const file of files) {
+//             if (file === 'default.svg') continue;
+//             fs.unlinkSync(`${__dirname}/svg/${file}`, err => {
+//                 if (err) throw err;
+//             });
+//         }
+//     });
+// };
+
+
 
 app.on('ready', () => {
-    emptySVGDir();
+    // emptySVGDir();
     createMainWindow();
 
     if (!DEBUG){
@@ -84,24 +82,30 @@ app.on('ready', () => {
             };
             
             updatePlot();
-            createFigure(FigId, ws_uri);
         });
     }
     else{
         setupPPWebSocket();
         setupMPLWebSocket();
         updatePlot();
-        FigId = 2409079543600;
-        createFigure(FigId, ws_uri);
     }
-
-    
 
     ipcMain.on('request-plot', (event, plotParams) => {
         plot(plotParams);
     })
     ipcMain.on('request-code', (event, plotParams) => {
         generateCode(plotParams);
+    })
+    ipcMain.on('save-configuration', (event, settings) => {
+        fs.writeFileSync("settings.json", JSON.stringify(settings), 'utf-8')
+    })
+    ipcMain.on('request-configuration', (e) => {
+        fs.readFile("settings.json", (err, data) => {
+            let settings = JSON.parse(data);
+            console.log(settings);
+            mainWindow.webContents.send('load-configuration', settings);
+            console.log(settings);
+        });
     })
 });
 
@@ -127,9 +131,8 @@ app.on('window-all-closed', () => {
     }
 });
 
-function updatePlot() {
-    // mainWindow.webContents.send('load-plot', filename)
-    mainWindow.webContents.send('load-plot', "http://127.0.0.1:8080/");
+function updatePlot(FigId) {
+    mainWindow.webContents.send('load-plot', FigId);
 };
 
 function get_websocket_type() {
@@ -166,12 +169,7 @@ function setupPPWebSocket(){
         // logger.log('error', error);
         showError(err);
     });
-    phaseportrait_socket.on
 };
-
-function createFigure(FigId, ws_uri) {
-    mainWindow.webContents.send('create-figure', FigId, ws_uri);
-}
 
 function showPythonCode(message) {
     mainWindow.webContents.send('show-code', message);
@@ -189,7 +187,8 @@ function sendParamsToPython(plot = true, plotParams = []) {
 function plot(plotParams) {
     phaseportrait_socket.removeAllListeners("message");
     phaseportrait_socket.on("message", (data) => {
-        updatePlot();
+        console.log(String(data));
+        updatePlot(data.toString());
     });
     sendParamsToPython(true, plotParams);
 };

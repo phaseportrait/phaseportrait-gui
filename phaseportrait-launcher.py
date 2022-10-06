@@ -41,34 +41,6 @@ class Logger:
 class PhasePortraitServer(tornado.web.Application):
     logger = Logger()
 
-    class MainPage(tornado.web.RequestHandler):
-        """
-        Serves the main HTML page.
-        """
-
-        def get(self):
-            manager = self.application.manager
-            html_content = open(os.path.join(os.path.dirname(__file__), 'plot.html'), 'r').read()
-            ws_uri = "ws://{req.host}/".format(req=self.request)
-            content = html_content \
-                .replace('%(files_path)', files_path) \
-                .replace('%(ws_uri)', ws_uri) \
-                .replace('%(fig_id)', str(manager.num))
-            self.write(content)
-
-    class MplJs(tornado.web.RequestHandler):
-        """
-        Serves the generated matplotlib javascript file.  The content
-        is dynamically generated based on which toolbar functions the
-        user has defined.  Call `FigureManagerWebAgg` to get its
-        content.
-        """
-
-        def get(self):
-            self.set_header('Content-Type', 'application/javascript')
-            js_content = open(os.path.join(os.path.dirname(__file__), 'web_backend/js/mpl.js'), 'r').read()
-            self.write(js_content)
-            
 
     class Download(tornado.web.RequestHandler):
         """
@@ -175,25 +147,48 @@ class PhasePortraitServer(tornado.web.Application):
 
         def on_message(self, message):
             
+            # Log message for debuggin intentions
             self.logger(message)
+            
             message = json.loads(message)
-            
-            
-            
-            if self.check_message_diference(message, ["dimension", "dF", "phaseportrait_object_type"]):
-                figid = self.application.start_phaseportrait(message=message)
-                self.logger(figid)
-                self.write_message(str(figid))
-            else:
-                try:
+ 
+            try:
+                # First check if the message needs other phaseportrait object type than previous message.
+                # If so, execute start_phaseportrait in order to create a new figure
+                if self.check_message_diference(message, ["dimension", "dF", "phaseportrait_object_type"]):
+                    
+                    # If a phaseportrait is already created close figure and delete it
+                    if hasattr(self.application, "phaseportrait"):
+                        plt.close(self.application.phaseportrait.fig)
+                        del self.application.phaseportrait
+                        
+                    result = self.application.start_phaseportrait(message=message)
+                
+                
+                # If not new phaseportrait object type is needed handle message internally 
+                else:
+                    
+                    # Try to handle the message via internal manager
                     result = self.application.phaseportrait.manager.handle_json(message)
+                    
+                    # If and error occur, start all over again
                     if result == 1:
-                        figid = self.application.start_phaseportrait(message=message)
-                        self.write_message(str(figid))
-                except Exception as e:
+                        result = self.application.start_phaseportrait(message=message)
+                    
+                    # If result is None or there was not problems then figure id is assign
+                    if (result is None) or (result == 0):
+                        result = self.application.phaseportrait.fig.number
+            except Exception as e:
                     self.write_error(str(e))
-            
+                
+            # Send the appropiate message and save this message for later comparison
+            self.write_message(str(result))
             self.last_message = message
+                
+
+                    
+        
+            
             
 
     def start_phaseportrait(self, *, message=None):
@@ -215,7 +210,7 @@ class PhasePortraitServer(tornado.web.Application):
             
             
             self.figure = self.phaseportrait.fig
-            self.manager = new_figure_manager_given_figure(id(self.figure), self.figure)
+            self.manager = new_figure_manager_given_figure(self.figure.number, self.figure)
             if message is not None:
                 result = self.phaseportrait.manager.handle_json(message)
             else:
@@ -223,27 +218,12 @@ class PhasePortraitServer(tornado.web.Application):
         except Exception as e:
             self.logger(e)
 
-        return id(self.figure)
+        return self.figure.number
 
     def __init__(self):
         self.FigId = self.start_phaseportrait()
 
         super().__init__([
-            # # Static files for the CSS and JS
-            # (r'/mpl_web_backend/(.*)',
-            # #  tornado.web.StaticFileHandler,
-            # {'path': os.path.join(os.path.dirname(__file__), 'web_backend').replace("\\", "/")}),
-
-            # # Static images for the toolbar
-            # (r'/web_backend/images/(.*)',
-            #  tornado.web.StaticFileHandler,
-            #  {'path': Path(mpl.get_data_path(), 'images')}),
-
-            # The page that contains all of the pieces
-            # ('/', self.MainPage),
-
-            # ('/mpl.js', self.MplJs),
-
             # Sends images and events to the browser, and receives
             # events from the browser
             ('/ws', self.PlotWebSocket),
