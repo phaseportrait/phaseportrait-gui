@@ -4,17 +4,28 @@ require('codemirror/addon/display/placeholder');
 
 const electron = require("electron");
 const cm = require('codemirror');
+const WebSocket = require('ws');
 
 let editor;
 let code_display;
-const defaultFunction = 'def a(x, y, *, w=0):\n\treturn y, -x';
+const defaultFunction = 'def a(x, y, *, w=-1):\n\treturn w*y, x';
 
+const dF_dimension_regex = /(?<=def\s+\w\s*\()[^\*]+(?=,\s*\*)|(?<=def\s+\w\s*\()[^\*]+(?=\))/;
+
+let configuration = {};
 let params = {};
+let prev_params = {};
 let dF_args = {};
+let sliders = {};
 let dF_args_length = 0;
 
 let plot_visible = true;
 let alertId = 0;
+
+let mpl_websocket;
+let Figure;
+let ws_uri = "ws://127.0.0.1:8080/";
+
 
 window.onload = () => {
     editor = cm.fromTextArea(document.getElementById('codemirror-container'), {
@@ -23,6 +34,8 @@ window.onload = () => {
         lineNumbers: true,
         placeholder: defaultFunction,
     });
+    editor.on("drop", (editor, e) => {return false;});
+
     code_display = cm.fromTextArea(document.getElementById('codemirror-container-code-display'), {
         mode: 'python',
         theme: 'material',
@@ -31,22 +44,65 @@ window.onload = () => {
 
     editor.on('change', e => {
         update_dF_args(e.getValue());
+        update_range_div();
     });
+
+    let parameters_div = document.getElementById('parameters_div');
+    document.addEventListener('drop', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        let _file = e.dataTransfer.files[0];
+
+        if (_file.type === "application/json"){
+            // loadJSON(_file.path, (data)=>{dF_args=data[0];});  
+            data = require(_file.path);
+            set_params(data);
+            plot(data);
+        };
+        return false;
+    });
+    document.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setLoadingState(true);
+    });
+    document.addEventListener('dragenter', (event) => {
+        setLoadingState(true);
+    });
+    document.addEventListener('dragleave', (event) => {
+        setLoadingState(false);
+    });
+
+    electron.ipcRenderer.send("request-configuration");
 }
 
-electron.ipcRenderer.on("load-svg", (event, filename) => {
+electron.ipcRenderer.on("load-configuration", (event, settings) => {
+    configuration = settings;
+    console.log(configuration);
+    if (configuration["dark"]) toggleDarkMode();
+});
+
+electron.ipcRenderer.on("load-plot", (event, FigId) => {
+    let fig_div = document.getElementById("figure");
+    while (fig_div.lastElementChild) { 
+        fig_div.removeChild(fig_div.lastElementChild);
+    }
+    Figure = null;
+
+    if (!Figure) {
+        create_figure();
+    }
+
     if (!plot_visible) {
         document.getElementById("code_div").style.display = 'none';
         plot_visible = !plot_visible;
     }
-    document.getElementById("img").src = `${__dirname}/svg/${filename}`;
-    document.getElementById("img").style.display = 'flex';
     setLoadingState(false);
 });
 
 electron.ipcRenderer.on("show-code", (event, code) => {
     if (plot_visible) {
-        document.getElementById("img").style.display = 'none';
+        document.getElementById("figure").style.display = 'none';
         plot_visible = !plot_visible;
     }
     document.getElementById("code_div").style.display = 'flex';
@@ -57,11 +113,30 @@ electron.ipcRenderer.on("show-code", (event, code) => {
 electron.ipcRenderer.on("show-error", (event, message) => {
     addAlert(message);
     document.getElementById('error').style.display = 'flex';
+    setLoadingState(true)
     setLoadingState(false);
 });
 
+function create_figure (){
+    let _websocket_type_ = get_websocket_type();
+    mpl_websocket = new _websocket_type_(`${ws_uri}ws`);
 
-function add_dFarg(param_name, placeholder) {
+    ondownload = (figure, format) => {
+        window.open('http://127.0.0.1:8080/download.' + format, '_blank')
+    };
+
+    Figure = new window.mpl.figure(
+        // A unique numeric identifier for the figure
+        0,
+        // A websocket object (or something that behaves like one)
+        mpl_websocket,
+        // A function called when a file type is selected for download
+        ondownload,
+        // The HTML element in which to place the figure
+        document.getElementById("figure"));
+};
+
+function add_dFarg(param_name, placeholder, min, max) {
     if (dF_args_length == 0) {
         document.getElementById('dF_args_div').style.display = null;
     }
@@ -74,14 +149,33 @@ function add_dFarg(param_name, placeholder) {
     param_div_name.innerHTML = param_name;
     param_div.append(param_div_name);
 
+    let param_slider_min = document.createElement('input');
+    param_slider_min.id = `${param_name}_slider_min`;
+    param_slider_min.type = "number";
+    param_slider_min.placeholder = String(min);
+    param_slider_min.className = "appearance-none block w-full bg-gray-200 dark:bg-[#263238] text-gray-700 " +
+        "border border-gray-200 dark:border-gray-500 rounded py-3 px-4 mb-3 dark:text-gray-100 leading-tight " +
+        "focus:outline-none focus:bg-white focus:border-gray-500";
+    param_div.append(param_slider_min);
+
     let param_input = document.createElement('input');
     param_input.id = `${param_name}_value`;
     param_input.type = "number";
     param_input.value = String(placeholder);
+    param_input.placeholder = String(placeholder);
     param_input.className = "appearance-none block w-full bg-gray-200 dark:bg-[#263238] text-gray-700 " +
         "border border-gray-200 dark:border-gray-500 rounded py-3 px-4 mb-3 dark:text-gray-100 leading-tight " +
         "focus:outline-none focus:bg-white focus:border-gray-500";
     param_div.append(param_input);
+
+    let param_slider_max = document.createElement('input');
+    param_slider_max.id = `${param_name}_slider_max`;
+    param_slider_max.type = "number";
+    param_slider_max.placeholder = String(max);
+    param_slider_max.className = "appearance-none block w-full bg-gray-200 dark:bg-[#263238] text-gray-700 " +
+        "border border-gray-200 dark:border-gray-500 rounded py-3 px-4 mb-3 dark:text-gray-100 leading-tight " +
+        "focus:outline-none focus:bg-white focus:border-gray-500";
+    param_div.append(param_slider_max);
 
     document.getElementById('dF_args_container').append(param_div);
 }
@@ -90,33 +184,77 @@ function remove_dFarg(param_name) {
     document.getElementById(`${param_name}_div`)?.remove();
 }
 
+function update_range_div() { 
+
+    // FEATURE: add automatic names for mandatory parameters
+    params['dF'] = !!editor.getValue() ? editor.getValue() : defaultFunction;
+
+    // Find dF mandatory parameters dimension
+    if (dF_dimension_regex.test(params['dF'])) {
+        const dF_dimension_match = params['dF'].match(dF_dimension_regex);
+        let dimension = dF_dimension_match[0].split(',').length;
+
+        if (dimension==3) {
+            document.getElementById('z_range_div').style.display = 'flex';
+        }
+        else
+            document.getElementById('z_range_div').style.display = 'none';
+    }
+}
+
+
 function update_dF_args(functionValue) {
     const dF_args_new = {};
+    const sliders_new = {};
     const dF_args_regex = /(?<=\*\s*,)[^\\)]*/;
 
-    if (!dF_args_regex.test(functionValue)) return;
+    // If function is not correctly writen remove all dF_args divs
+    if (!dF_args_regex.test(functionValue)) {
+        Object.keys(dF_args).forEach(function (key) {
+            if (!(key in dF_args_new)) {
+                remove_dFarg(key);
+                dF_args_length -= 1;
+            }
+        });
+        if (dF_args_length === 0) {
+            document.getElementById('dF_args_div').style.display = 'none'
+        }
+    
+        dF_args = dF_args_new;
+        sliders = sliders_new;
+        return;
+    }
 
+
+    // Get new dF_args and values from dF functionValue
     const dF_args_match = functionValue.match(dF_args_regex);
     if (dF_args_match) {
-        const arguments = dF_args_match[0].replace(/\s+/g, '').split(',')
+        const arguments = dF_args_match[0].replace(/\s+/g, '').split(',');
         arguments.forEach(parameter => {
             if (!parameter) return;
             if (parameter.match(/=/)) {
-                const parameter_splited = parameter.split(/=/)
-                dF_args_new[parameter_splited[0]] = Number(parameter_splited[1])
+                const parameter_splited = parameter.split(/=/);
+                dF_args_new[parameter_splited[0]] = Number(parameter_splited[1]);
             } else {
-                dF_args_new[parameter] = 0
+                dF_args_new[parameter] = 0;
             }
         });
     }
+
+    // For each dF_args_new get value, sliders min and max, and add div if not exists
     Object.keys(dF_args_new).forEach(function (key) {
         if (key in dF_args) {
-            dF_args_new[key] = Number(document.getElementById(`${key}_value`).value)
+            dF_args_new[key] = Number(document.getElementById(`${key}_value`).value);
+            sliders_new[key] = {};
+            sliders_new[key]["min"] = document.getElementById(`${key}_slider_min`).value ? Number(document.getElementById(`${key}_slider_min`).value) : dF_args_new[key]-1;
+            sliders_new[key]["max"] = document.getElementById(`${key}_slider_max`).value ? Number(document.getElementById(`${key}_slider_max`).value) : dF_args_new[key]+1;
         } else {
-            add_dFarg(key, dF_args[key]);
+            add_dFarg(key, dF_args_new[key], dF_args_new[key]-1, dF_args_new[key]+1);
             dF_args_length += 1;
         }
     });
+
+    // Update dF_args to dF_args_new: remove div not valid
     Object.keys(dF_args).forEach(function (key) {
         if (!(key in dF_args_new)) {
             remove_dFarg(key);
@@ -128,6 +266,7 @@ function update_dF_args(functionValue) {
     }
 
     dF_args = dF_args_new;
+    sliders = sliders_new;
 }
 
 function update_params() {
@@ -136,15 +275,30 @@ function update_params() {
     // dF
     params['dF'] = !!editor.getValue() ? editor.getValue() : defaultFunction;
 
+
+    // Find dF mandatory parameters dimension
+    const dF_dimension_match = params['dF'].match(dF_dimension_regex);
+    params["dimension"] = dF_dimension_match[0].split(',').length;
+
+    // if (params['dF'] === prev_params?['dF']:''){
+    //     params = {};
+    // }
+
     // dF_args_new
     update_dF_args(params['dF']);
+
     params['dF_args'] = dF_args;
+    params['sliders'] = sliders;
 
     // Range
     x_min = document.getElementById('x_min').value ? Number(document.getElementById('x_min').value) : 0;
     x_max = document.getElementById('x_max').value ? Number(document.getElementById('x_max').value) : 1;
     y_min = document.getElementById('y_min').value ? Number(document.getElementById('y_min').value) : 0;
     y_max = document.getElementById('y_max').value ? Number(document.getElementById('y_max').value) : 1;
+
+    z_min = document.getElementById('z_min').value ? Number(document.getElementById('z_min').value) : 0;
+    z_max = document.getElementById('z_max').value ? Number(document.getElementById('z_max').value) : 1;
+
     params['Range'] = {
         x_min,
         x_max,
@@ -152,15 +306,45 @@ function update_params() {
         y_max
     };
 
+    if (params['dimension'] == 3) {
+        params['Range'] = {
+            x_min,
+            x_max,
+            y_min,
+            y_max,
+            z_min,
+            z_max
+        };
+    }
+
     // Optionals
     MeshDim = Number(document.getElementById('MeshDim').value);
     if (MeshDim) params['MeshDim'] = MeshDim;
 
+    // TODO: make other portraits available as trajectories or maps.
+    if (params["dimension"]==3) {
+        params['MeshDim'] = Math.min(params['MeshDim']?params['MeshDim']:8, 8);
+        params["phaseportrait_object_type"] = "PhasePortrait3D";
+    }
+    if (params["dimension"]==2) {
+        params["phaseportrait_object_type"] = "PhasePortrait2D";
+    }
+    
+
     Density = Number(document.getElementById('Density').value);
     if (Density) params['Density'] = Density;
 
-    Polar = Boolean(document.getElementById('Polar').checked)
-    if (Polar) params['Polar'] = Polar
+    Polar = Boolean(document.getElementById('Polar').checked);
+    if (Polar) params['Polar'] = Polar;
+
+    xScale = document.getElementById('xScale').value;
+    if (xScale) params['xScale'] = xScale;
+
+    yScale = document.getElementById('yScale').value;
+    if (yScale) params['yScale'] = yScale;
+
+    Colorbar = Boolean(document.getElementById('Colorbar').checked);
+    if (Colorbar) params['Colorbar'] = Colorbar;
 
     Title = document.getElementById('Title').value;
     if (Title) params['Title'] = Title;
@@ -179,44 +363,111 @@ function update_params() {
     precision = Number(document.getElementById('precision').value);
     if (document.getElementById('precision').value) {
         if (!offset) offset = 0;
-        document.getElementById('offset').value
+
         params['nullcline'] = {
             offset,
             precision
         };
     }
 
-    params['path'] = `${__dirname}/svg/`
+    params['path'] = `${__dirname}/svg/`;
 
+    prev_params = params;
     return params
 }
 
-function plot() {
+function set_params(new_params) {
+    // dF
+    editor.setValue(new_params['dF']);
+
+    // Range
+    document.getElementById('x_min').value = new_params["Range"]["x_min"];
+    document.getElementById('x_max').value = new_params["Range"]["x_max"];
+    document.getElementById('y_min').value = new_params["Range"]["y_min"];
+    document.getElementById('y_max').value = new_params["Range"]["y_max"];
+
+    // Optionals
+    if (!(new_params['MeshDim'] === undefined))
+        document.getElementById('MeshDim').value = new_params['MeshDim'];
+
+    if (!(new_params['Density'] === undefined))
+        document.getElementById('Density').value = new_params['Density'];
+
+    if (!(new_params['Polar'] === undefined))
+        document.getElementById('Polar').checked = Boolean(new_params['Polar']);
+
+    if (!(new_params['xScale'] === undefined))
+        document.getElementById('xScale').value = new_params['xScale'];
+
+    if (!(new_params['yScale'] === undefined))
+        document.getElementById('yScale').value = new_params['yScale'];
+
+    if (!(new_params['Colorbar'] === undefined))
+        document.getElementById('Colorbar').checked = Boolean(new_params['Colorbar']);
+
+    if (!(new_params['Title'] === undefined))
+        document.getElementById('Title').value = new_params['Title'];
+
+    if (!(new_params['xlabel'] === undefined))
+        document.getElementById('xlabel').value = new_params['xlabel'];
+
+    if (!(new_params['ylabel'] === undefined))
+        document.getElementById('ylabel').value = new_params['ylabel'];
+
+    if (!(new_params['color'] === undefined))
+        document.getElementById('color').value = new_params['color'];
+
+    // Nullclines
+    if (new_params['nullcline']){
+        document.getElementById('offset').value = Number(new_params['nullcline']['offset']);
+        document.getElementById('precision').value = Number(new_params['nullcline']['precision']);
+    }
+
+    prev_params = new_params;
+    return new_params
+}
+
+function plot(_params=false) {
     exit_code_display()
-    params = update_params();
+    params = (!_params)? update_params(): _params;
+
     setLoadingState(true);
     electron.ipcRenderer.send("request-plot", params);
 }
 
+
 function get_python_code() {
     params = update_params();
-    setLoadingState(true);
+    // setLoadingState(true);
     electron.ipcRenderer.send("request-code", params);
 }
 
 function setLoadingState(isLoading) {
     if (isLoading) {
-        document.getElementById('img').style.display = 'none';
+        document.getElementById('figure').style.display = 'none';
         document.getElementById('code_div').style.display = 'none';
         document.getElementById('error').style.display = 'none';
+    }
+    else{
+        
+        if (plot_visible) {
+            document.getElementById('figure').style.display = 'flex';
+        }
+        else{
+            document.getElementById('code_div').style.display = 'flex';
+        }
     }
     document.getElementById('loader').style.display = isLoading ? 'flex' : 'none';
 }
 
 function toggleDarkMode() {
     const root = document.getElementsByTagName('html')[0];
-    if (root.classList.contains('dark')) root.classList.remove('dark')
-    else root.classList.add('dark')
+    let is_dark = root.classList.contains('dark');
+    if (is_dark) root.classList.remove('dark');
+    else root.classList.add('dark');
+
+    configuration["dark"] = !is_dark;
+    electron.ipcRenderer.send("save-configuration", configuration);
 }
 
 function toggleFullScreenMode() {
@@ -240,7 +491,7 @@ function toggleFullScreenMode() {
 
 function exit_code_display() {
     if (!plot_visible) {
-        document.getElementById("img").style.display = null;
+        document.getElementById("figure").style.display = null;
         document.getElementById("code_div").style.display = 'none';
         plot_visible = !plot_visible;
     }
@@ -287,3 +538,18 @@ function removeAllAlerts() {
     alertsContainer.style.display = 'none';
     alerts.innerHTML = '';
 }
+
+function get_websocket_type() {
+    if (typeof WebSocket !== 'undefined') {
+        return WebSocket;
+    } else if (typeof MozWebSocket !== 'undefined') {
+        return MozWebSocket;
+    } else {
+        alert(
+            'Your browser does not have WebSocket support. ' +
+                'Please try Chrome, Safari or Firefox ≥ 6. ' +
+                'Firefox 4 and 5 are also supported but you ' +
+                'have to enable WebSockets in about:config.'
+        );
+    }
+};

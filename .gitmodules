@@ -1,4 +1,4 @@
-[submodule "phaseportrait"]
-	path = phaseportrait
-	url = git@github.com:phaseportrait/phaseportrait.git
+[submodule "phaseportrait_local"]
+	path = phaseportrait_local
+	url = https://github.com/phaseportrait/phaseportrait
 	branch = develop

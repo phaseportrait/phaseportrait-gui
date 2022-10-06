@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html>
 
@@ -8,7 +9,13 @@
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="node_modules/codemirror/lib/codemirror.css">
     <link rel="stylesheet" href="node_modules/codemirror/theme/material.css">
+    <link rel="stylesheet" href="web_backend/css/page.css">
+    <link rel="stylesheet" href="web_backend/css/boilerplate.css">
+    <link rel="stylesheet" href="web_backend/css/fbm.css">
+    <link rel="stylesheet" href="web_backend/css/mpl.css">
     <script src="renderer.js"></script>
+    <script src="web_backend/js/mpl.js"></script>
+    <!-- <script src="web_backend/js/nbagg_mpl.js"></script> -->
 </head>
 
 <body class="dark:bg-gray-600">
@@ -85,6 +92,13 @@
                 </div>
 
                 <!-- Args container -->
+                <!-- TODO: poner bonito. Imagino que habrá que ponérselo al primero de los dF_args. -->
+                <div class="field w-full flex gap-2 items-center ">
+                    <!-- <label class="label">name</label> -->
+                    <label class="label w-full" style="margin-left: 6%; ">min</label>
+                    <label class="label w-full">value</label>
+                    <label class="label w-full">max</label>
+                </div>
                 <div id="dF_args_container" class="container flex flex-col items-center gap-2">
                 </div>
 
@@ -108,6 +122,10 @@
                             <label class="label">max</label>
                             <input id="x_max" type="number" placeholder="1" class="input">
                         </div>
+                        <div>
+                            <label class="label">scale</label>
+                            <input id="xScale" type="text" placeholder="" class="input">
+                        </div>
 
                     </div>
                     <div class="field w-full flex gap-2 items-center">
@@ -117,6 +135,22 @@
                         </div>
                         <div>
                             <input id="y_max" type="number" placeholder="1" class="input">
+                        </div>
+                        <div>
+                            <input id="yScale" type="text" placeholder="" class="input">
+                        </div>
+
+                    </div>
+                    <div id="z_range_div" class="field w-full flex gap-2 items-center" style="display: none">
+                        <div class="label">z</div>
+                        <div>
+                            <input id="z_min" type="number" placeholder="0" class="input">
+                        </div>
+                        <div>
+                            <input id="z_max" type="number" placeholder="1" class="input">
+                        </div>
+                        <div>
+                            <input id="zScale" type="text" placeholder="" class="input">
                         </div>
 
                     </div>
@@ -160,8 +194,10 @@
 
                 <!-- color -->
                 <div class="field w-full">
+                    <!-- TODO: mejorar la presentación de esta parte -->
                     <div class="flex justify-between items-center">
                         <label for="color" class="label">Color</label>
+
                         <a target="_blank" class="dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400"
                            href="https://matplotlib.org/stable/tutorials/colors/colormaps.html">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mt-[-0.5rem]" fill="none"
@@ -171,8 +207,22 @@
                                       d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                             </svg>
                         </a>
+
+                        <input class="
+                            h-4 w-4
+                            m-0 mr-1
+                            border border-gray-300 rounded-sm bg-white
+                            checked:bg-blue-600 checked:border-blue-600
+                            focus:outline-none
+                            transition duration-200 align-top
+                            bg-no-repeat bg-center bg-contain float-left
+                            cursor-pointer"
+                            type="checkbox" id="Colorbar">
+                        <label class="inline-block text-gray-800 dark:text-white text-sm select-none" for="Colorbar">
+                            Colorbar
+                    </label>
                     </div>
-                    <input id="color" type="text" placeholder="viridis" class="input">
+                    <input id="color" type="text" placeholder="rainbow" class="input">
                 </div>
 
             </div>
@@ -246,7 +296,7 @@
             <div class="image-area__container relative">
 
                 <div id="loader" class="container flex justify-center items-center py-12 select-none"
-                     style="display: none">
+                     style="display: null">
                     <img src="./icons/phaseportrait_icon.ico" alt="">
                 </div>
 
@@ -255,12 +305,21 @@
                     <img src="./icons/phaseportrait_sadicon.png" alt="">
                 </div>
 
-                <img id="img" src="svg/default.svg" class="
-                    max-h-full
-                    flex-1
+                <!-- <iframe id="img" src="svg/default.svg" class="
+                    max-w-full
                     bg-gray-100
-                    dark:rounded-xl
-                ">
+                    dark:rounded-xl" 
+                    style="display: flex; border: none;"
+                    frameborder="0" 
+                    marginheight="0" 
+                    marginwidth="0" 
+                    width="100%" 
+                    height="650px">
+                </iframe> -->
+
+                <div id="figure" class="rounded-md">
+                </div>
+                
 
                 <!-- Code display -->
                 <div id="code_div" style="display: none;" class="

@@ -23,7 +23,9 @@
   "homepage": "https://github.com/phaseportrait/phaseportrait-gui#readme",
   "dependencies": {
     "codemirror": "^5.65.1",
-    "python-shell": "^3.0.1"
+    "plotly.js-dist-min": "^2.12.1",
+    "python-shell": "^3.0.1",
+    "ws": "^8.6.0"
   },
   "devDependencies": {
     "electron": "^17.1.0",
