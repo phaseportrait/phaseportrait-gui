@@ -13,19 +13,15 @@ Its intention is to provide access for beginners in Python or in our library to 
 
 Let's see the phase portrait of the following differential equations:
 
-$$ 
+![image](imgs/formula.PNG)
 
-\dot r =  r \cdot (1 - r^2) \\
-\dot t =  1
-$$
-
-Where $r$ and $t$ are polar coordinates: radius and angle respectively.
+Where r and t are polar coordinates: radius and angle respectively.
 
 ![image](imgs/Example.PNG)
 
-We can add to the plot a **colorbar** that indicates the speed's modulus ($\sqrt{\dot x^2 + \dot y^2}$).
+We can add to the plot a **colorbar** that indicates the speed's modulus.
 
-We can also add **nullclines** (isoclines) that show where $\dot x = 0 $ (red) and $\dot y = 0 $ (green).
+We can also add **nullclines** (isoclines) that show where vx = 0 (red) and  vy = 0 (green).
 
 ![image](imgs/Nullclines_Colorbar.PNG)
 
