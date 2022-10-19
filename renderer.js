@@ -10,7 +10,7 @@ let editor;
 let code_display;
 const defaultFunction = 'def a(x, y, *, w=-1):\n\treturn w*y, x';
 
-const dF_dimension_regex = /(?<=def\s+\w\s*\()[^\*]+(?=,\s*\*)|(?<=def\s+\w\s*\()[^\*]+(?=\))/;
+const dF_dimension_regex = /(?<=def\s+\w+\s*\()[^\*]+(?=,\s*\*)|(?<=def\s+\w+\s*\()[^\*]+(?=\))/;
 
 let configuration = {};
 let params = {};
@@ -20,6 +20,7 @@ let sliders = {};
 let dF_args_length = 0;
 
 let plot_visible = true;
+let isLoading = true;
 let alertId = 0;
 
 let mpl_websocket;
@@ -431,6 +432,11 @@ function plot(_params=false) {
     exit_code_display()
     params = (!_params)? update_params(): _params;
 
+    // In case plot button spam
+    if (isLoading){
+        addAlert("Please, wait until the plot is shown.")
+        return
+    }
     setLoadingState(true);
     electron.ipcRenderer.send("request-plot", params);
 }
@@ -442,8 +448,8 @@ function get_python_code() {
     electron.ipcRenderer.send("request-code", params);
 }
 
-function setLoadingState(isLoading) {
-    if (isLoading) {
+function setLoadingState(loadingState) {
+    if (loadingState) {
         document.getElementById('figure').style.display = 'none';
         document.getElementById('code_div').style.display = 'none';
         document.getElementById('error').style.display = 'none';
@@ -457,7 +463,8 @@ function setLoadingState(isLoading) {
             document.getElementById('code_div').style.display = 'flex';
         }
     }
-    document.getElementById('loader').style.display = isLoading ? 'flex' : 'none';
+    document.getElementById('loader').style.display = loadingState ? 'flex' : 'none';
+    isLoading = loadingState;
 }
 
 function toggleDarkMode() {
