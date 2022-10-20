@@ -64,13 +64,8 @@ function createMainWindow() {
 //     });
 // };
 
-
-
-app.on('ready', () => {
-    // emptySVGDir();
-    createMainWindow();
-
-    if (!DEBUG){
+function launchPython() {
+    if (!DEBUG) {
         python_server_process = spawn('python',[`${__dirname}/phaseportrait-launcher.py`])
         python_server_process.stdout.on('data', (data) => {
             if (DEBUG || DEBUG_RENDER)  console.log(String(data));
@@ -83,6 +78,16 @@ app.on('ready', () => {
             
             updatePlot();
         });
+    }
+}
+
+
+app.on('ready', () => {
+    // emptySVGDir();
+    createMainWindow();
+
+    if (!DEBUG){
+        launchPython()
     }
     else{
         setupPPWebSocket();
@@ -166,6 +171,7 @@ function setupPPWebSocket(){
     };
     phaseportrait_socket.on("error", (err) => {
         // logger.log('error', error);
+        launchPython()
         showError(err);
     });
 };
