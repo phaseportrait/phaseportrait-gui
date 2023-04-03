@@ -7,6 +7,8 @@ const fs = require('fs');
 const { exit } = require('process');
 const WebSocket = require('ws');
 
+const controller = new AbortController();
+const {signal} = controller;
 const DEBUG = false;
 const DEBUG_RENDER = false;
 
@@ -59,7 +61,7 @@ function launchPython() {
     
     if (!DEBUG) {
         console.log("Python launched on:" + settings["python"]);
-        python_server_process = spawn(settings["python"],[`${__dirname}/phaseportrait-launcher.py`, `&>${__dirname}/python_log.log`])
+        python_server_process = spawn(settings["python"],[`${__dirname}/phaseportrait-launcher.py`, `&>${__dirname}/python_log.log`], {signal})
         python_server_process.stdout.on('data', (data) => {
             if (DEBUG || DEBUG_RENDER)  console.log(String(data));
             FigId = String(data).split(',')[1];
@@ -101,11 +103,8 @@ app.on('ready', () => {
         fs.writeFileSync("settings.json", JSON.stringify(settings), 'utf-8')
     })
     ipcMain.on('request-configuration', (e) => {
-        fs.readFile("settings.json", (err, data) => {
-            let settings = JSON.parse(data);
-            if (DEBUG || DEBUG_RENDER)  console.log(settings);
-            mainWindow.webContents.send('load-configuration', settings);
-        });
+        let readSettings = require(`${__dirname}/settings.json`)
+        mainWindow.webContents.send('load-configuration', readSettings);
     })
 });
 
@@ -122,6 +121,7 @@ app.on('activate', () => {
 
 app.on('quit', () => {
     // do some additional cleanup
+    controller.abort()
 });
 
 app.on('window-all-closed', () => {
