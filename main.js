@@ -4,12 +4,13 @@ const { spawn } = require('child_process');
 const electron = require('electron');
 const {app, BrowserWindow, ipcMain} = electron;
 const fs = require('fs');
-
+const { exit } = require('process');
 const WebSocket = require('ws');
-
 
 const DEBUG = false;
 const DEBUG_RENDER = false;
+
+let settings = require(`${__dirname}/settings.json`)
 
 
 // Keep a global reference of the mainWindowdow object to avoid garbage collector
@@ -21,6 +22,8 @@ let FigId = null;
 let ws_uri = "ws://127.0.0.1:8080/";
 
 function createMainWindow() {
+    console.log(settings);
+
     // Create the browser mainWindow
     mainWindow = new BrowserWindow({
         width: 1200,
@@ -52,21 +55,11 @@ function createMainWindow() {
     });
 };
 
-// function emptySVGDir() {
-//     fs.readdir(`${__dirname}/svg`, (err, files) => {
-//         if (err) throw err;
-//         for (const file of files) {
-//             if (file === 'default.svg') continue;
-//             fs.unlinkSync(`${__dirname}/svg/${file}`, err => {
-//                 if (err) throw err;
-//             });
-//         }
-//     });
-// };
-
 function launchPython() {
+    
     if (!DEBUG) {
-        python_server_process = spawn('python',[`${__dirname}/phaseportrait-launcher.py`])
+        console.log("Python launched on:" + settings["python"]);
+        python_server_process = spawn(settings["python"],[`${__dirname}/phaseportrait-launcher.py`, `&>${__dirname}/python_log.log`])
         python_server_process.stdout.on('data', (data) => {
             if (DEBUG || DEBUG_RENDER)  console.log(String(data));
             FigId = String(data).split(',')[1];
@@ -78,6 +71,9 @@ function launchPython() {
             
             updatePlot();
         });
+        python_server_process.on('error', (err) => {
+            console.error('Failed to start subprocess.');
+          });
     }
 }
 
@@ -87,7 +83,7 @@ app.on('ready', () => {
     createMainWindow();
 
     if (!DEBUG){
-        launchPython()
+        launchPython();
     }
     else{
         setupPPWebSocket();
@@ -171,7 +167,7 @@ function setupPPWebSocket(){
     };
     phaseportrait_socket.on("error", (err) => {
         // logger.log('error', error);
-        launchPython()
+        launchPython();
         showError(err);
     });
 };
