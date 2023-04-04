@@ -98,13 +98,13 @@ mpl.figure.prototype.close_ws = function (fig, msg) {
     // fig.ws.close()
 };
 
-mpl.figure.prototype.push_to_output = function (_remove_interactive) {
-    // Turn the data on the canvas into data in the output cell.
-    var width = this.canvas.width / this.ratio;
-    var dataURL = this.canvas.toDataURL();
-    this.cell_info[1]['text/html'] =
-        '<img src="' + dataURL + '" width="' + width + '">';
-};
+// mpl.figure.prototype.push_to_output = function (_remove_interactive) {
+//     // Turn the data on the canvas into data in the output cell.
+//     var width = this.canvas.width / this.ratio;
+//     var dataURL = this.canvas.toDataURL();
+//     this.cell_info[1]['text/html'] =
+//         '<img src="' + dataURL + '" width="' + width + '">';
+// };
 
 mpl.figure.prototype.updated_canvas_event = function () {
     // Tell IPython that the notebook contents must change.
@@ -118,86 +118,86 @@ mpl.figure.prototype.updated_canvas_event = function () {
     }, 1000);
 };
 
-mpl.figure.prototype._init_toolbar = function () {
-    var fig = this;
+// mpl.figure.prototype._init_toolbar = function () {
+//     var fig = this;
 
-    var toolbar = document.createElement('div');
-    toolbar.classList = 'btn-toolbar';
-    this.root.appendChild(toolbar);
+//     var toolbar = document.createElement('div');
+//     toolbar.classList = 'btn-toolbar';
+//     this.root.appendChild(toolbar);
 
-    function on_click_closure(name) {
-        return function (_event) {
-            return fig.toolbar_button_onclick(name);
-        };
-    }
+//     function on_click_closure(name) {
+//         return function (_event) {
+//             return fig.toolbar_button_onclick(name);
+//         };
+//     }
 
-    function on_mouseover_closure(tooltip) {
-        return function (event) {
-            if (!event.currentTarget.disabled) {
-                return fig.toolbar_button_onmouseover(tooltip);
-            }
-        };
-    }
+//     function on_mouseover_closure(tooltip) {
+//         return function (event) {
+//             if (!event.currentTarget.disabled) {
+//                 return fig.toolbar_button_onmouseover(tooltip);
+//             }
+//         };
+//     }
 
-    fig.buttons = {};
-    var buttonGroup = document.createElement('div');
-    buttonGroup.classList = 'btn-group';
-    var button;
-    for (var toolbar_ind in mpl.toolbar_items) {
-        var name = mpl.toolbar_items[toolbar_ind][0];
-        var tooltip = mpl.toolbar_items[toolbar_ind][1];
-        var image = mpl.toolbar_items[toolbar_ind][2];
-        var method_name = mpl.toolbar_items[toolbar_ind][3];
+//     fig.buttons = {};
+//     var buttonGroup = document.createElement('div');
+//     buttonGroup.classList = 'btn-group';
+//     var button;
+//     for (var toolbar_ind in mpl.toolbar_items) {
+//         var name = mpl.toolbar_items[toolbar_ind][0];
+//         var tooltip = mpl.toolbar_items[toolbar_ind][1];
+//         var image = mpl.toolbar_items[toolbar_ind][2];
+//         var method_name = mpl.toolbar_items[toolbar_ind][3];
 
-        if (!name) {
-            /* Instead of a spacer, we start a new button group. */
-            if (buttonGroup.hasChildNodes()) {
-                toolbar.appendChild(buttonGroup);
-            }
-            buttonGroup = document.createElement('div');
-            buttonGroup.classList = 'btn-group';
-            continue;
-        }
+//         if (!name) {
+//             /* Instead of a spacer, we start a new button group. */
+//             if (buttonGroup.hasChildNodes()) {
+//                 toolbar.appendChild(buttonGroup);
+//             }
+//             buttonGroup = document.createElement('div');
+//             buttonGroup.classList = 'btn-group';
+//             continue;
+//         }
 
-        button = fig.buttons[name] = document.createElement('button');
-        button.classList = 'btn btn-default';
-        button.href = '#';
-        button.title = name;
-        button.innerHTML = '<i class="fa ' + image + ' fa-lg"></i>';
-        button.addEventListener('click', on_click_closure(method_name));
-        button.addEventListener('mouseover', on_mouseover_closure(tooltip));
-        buttonGroup.appendChild(button);
-    }
+//         button = fig.buttons[name] = document.createElement('button');
+//         button.classList = 'btn btn-default';
+//         button.href = '#';
+//         button.title = name;
+//         button.innerHTML = '<i class="fa ' + image + ' fa-lg"></i>';
+//         button.addEventListener('click', on_click_closure(method_name));
+//         button.addEventListener('mouseover', on_mouseover_closure(tooltip));
+//         buttonGroup.appendChild(button);
+//     }
 
-    if (buttonGroup.hasChildNodes()) {
-        toolbar.appendChild(buttonGroup);
-    }
+//     if (buttonGroup.hasChildNodes()) {
+//         toolbar.appendChild(buttonGroup);
+//     }
 
-    // Add the status bar.
-    var status_bar = document.createElement('span');
-    status_bar.classList = 'mpl-message pull-right';
-    toolbar.appendChild(status_bar);
-    this.message = status_bar;
+//     // Add the status bar.
+//     var status_bar = document.createElement('span');
+//     status_bar.classList = 'mpl-message pull-right';
+//     toolbar.appendChild(status_bar);
+//     this.message = status_bar;
 
-    // Add the close button to the window.
-    var buttongrp = document.createElement('div');
-    buttongrp.classList = 'btn-group inline pull-right';
-    button = document.createElement('button');
-    button.classList = 'btn btn-mini btn-primary';
-    button.href = '#';
-    button.title = 'Stop Interaction';
-    button.innerHTML = '<i class="fa fa-power-off icon-remove icon-large"></i>';
-    button.addEventListener('click', function (_evt) {
-        fig.handle_close(fig, {});
-    });
-    button.addEventListener(
-        'mouseover',
-        on_mouseover_closure('Stop Interaction')
-    );
-    buttongrp.appendChild(button);
-    var titlebar = this.root.querySelector('.ui-dialog-titlebar');
-    titlebar.insertBefore(buttongrp, titlebar.firstChild);
-};
+//     // Add the close button to the window.
+//     var buttongrp = document.createElement('div');
+//     buttongrp.classList = 'btn-group inline pull-right';
+//     button = document.createElement('button');
+//     button.classList = 'btn btn-mini btn-primary';
+//     button.href = '#';
+//     button.title = 'Stop Interaction';
+//     button.innerHTML = '<i class="fa fa-power-off icon-remove icon-large"></i>';
+//     button.addEventListener('click', function (_evt) {
+//         fig.handle_close(fig, {});
+//     });
+//     button.addEventListener(
+//         'mouseover',
+//         on_mouseover_closure('Stop Interaction')
+//     );
+//     buttongrp.appendChild(button);
+//     var titlebar = this.root.querySelector('.ui-dialog-titlebar');
+//     titlebar.insertBefore(buttongrp, titlebar.firstChild);
+// };
 
 mpl.figure.prototype._remove_fig_handler = function (event) {
     var fig = event.data.fig;

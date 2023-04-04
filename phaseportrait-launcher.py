@@ -18,8 +18,8 @@ import tornado.websocket
 
 import matplotlib as mpl
 from matplotlib import pyplot as plt
-from matplotlib.backends.backend_webagg_core import \
-    new_figure_manager_given_figure
+from matplotlib.backends.backend_webagg import \
+    FigureManagerWebAgg, new_figure_manager_given_figure
 
 files_path = '/'.join(__file__.split('\\')[:-1])
 
@@ -110,8 +110,11 @@ class PhasePortraitServer(tornado.web.Application):
                     except Exception as e:
                         print(e, flush=True, end='')
                         self.logger(e)
-                self._prev_ = message.get('name', None)
-                manager.handle_json(message)
+                self._prev_ = message.get('type', None)
+                try:
+                    manager.handle_json(message)
+                except Exception as e:
+                    self.logger(e)
                 
 
         def send_json(self, content):
